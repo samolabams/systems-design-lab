@@ -1,0 +1,3 @@
+;; PgBouncer auth file. Format: "user" "password-hash".
+;; Hash = "md5" + md5(password + username). Here user=app, password=app.
+"app" "md5fe63fea7be31b0200b496d08bc6b517d"

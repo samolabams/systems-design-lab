@@ -1,0 +1,77 @@
+# Grafana datasource provisioning (5 — three pillars).
+#
+# Grafana reads this on startup and auto-creates all three datasources plus the
+# links that make the metric -> trace -> log pivot work with zero manual setup:
+#
+#   Prometheus  metrics; each latency exemplar carries a trace_id that jumps to
+#               Tempo (exemplarTraceIdDestinations).
+#   Tempo       traces; a span links out to its logs in Loki (tracesToLogsV2).
+#   Loki        logs; a derived field pulls trace_id from the line and links it
+#               back to Tempo, closing the loop.
+#
+# `access: proxy` means Grafana queries each backend server-side over Compose DNS.
+# Docs: https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      # A latency-histogram exemplar links straight to the trace in Tempo.
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    editable: true
+    jsonData:
+      # From a span, jump to the log lines that share its trace_id (in Loki).
+      # trace_id arrives as Loki *structured metadata*, so we filter with
+      # `| trace_id="..."` rather than the default `|=` line filter (the log body
+      # never contains the id). `{service_name=~".+"}` spans app *and* worker so a
+      # cross-service trace shows every service's logs. Grafana provisioning eats
+      # one `$`, so `$${__trace.traceId}` reaches Grafana as `${__trace.traceId}`.
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: -1h
+        spanEndTimeShift: 1h
+        filterByTraceID: false
+        customQuery: true
+        query: '{service_name=~".+"} | trace_id="$${__trace.traceId}"'
+      # Draw the service graph from span metrics when available.
+      serviceMap:
+        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true
+
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+    jsonData:
+      # Pull trace_id out of each log line (JSON body or structured metadata) and
+      # link it back to the trace in Tempo — the last hop of the pivot.
+      derivedFields:
+        - name: trace_id
+          matcherType: label
+          matcherRegex: trace_id
+          datasourceUid: tempo
+          url: "$${__value.raw}"
+          urlDisplayLabel: "View trace"
+        - name: trace_id_body
+          matcherType: regex
+          matcherRegex: '"trace_id":"(\w+)"'
+          datasourceUid: tempo
+          url: "$${__value.raw}"
+          urlDisplayLabel: "View trace"

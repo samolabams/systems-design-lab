@@ -1,0 +1,42 @@
+; Authoritative zone for shop.internal. — this server holds the real answers.
+; It exists to show the common resource-record (RR) types in one place. Each
+; line binds a NAME to a TYPE and a value; the number is that record's TTL
+; (how long a resolver may cache it before asking again).
+$ORIGIN shop.internal.
+$TTL 30
+@   IN  SOA ns1.shop.internal. admin.shop.internal. (
+        1          ; serial — bump this when you edit the zone
+        3600       ; refresh
+        600        ; retry
+        604800     ; expire
+        30 )       ; minimum TTL
+
+; --- NS: who is authoritative for this zone ---------------------------------
+@            IN  NS    ns1.shop.internal.
+ns1          IN  A     172.30.53.3
+
+; --- A: hostname -> IPv4. Two records under ONE name = DNS-level load
+;     balancing. The resolver hands both back and the loadbalance plugin
+;     may rotate their order, so clients spread across the two "backends". ---
+www          IN  A     10.0.0.11
+www          IN  A     10.0.0.12
+
+; --- AAAA: hostname -> IPv6 -------------------------------------------------
+www          IN  AAAA  2001:db8::11
+
+; --- CNAME: an alias that points at another NAME (not an IP). Looking up
+;     api.shop.internal. returns the CNAME, then the resolver chases it to
+;     www's A records. ------------------------------------------------------
+api          IN  CNAME www.shop.internal.
+cdn          IN  CNAME www.shop.internal.
+
+; --- MX: where mail for @shop.internal. should be delivered (with priority) --
+@            IN  MX    10 mail.shop.internal.
+mail         IN  A     10.0.0.20
+
+; --- TXT: arbitrary text, used for things like domain verification and SPF ---
+@            IN  TXT   "v=spf1 include:_spf.shop.internal ~all"
+_dmarc       IN  TXT   "v=DMARC1; p=none"
+
+; --- SRV: locate a service by protocol — priority, weight, port, target ------
+_http._tcp   IN  SRV   10 5 80 www.shop.internal.

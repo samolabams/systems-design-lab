@@ -1,0 +1,18 @@
+# Grafana dashboard provisioning (5).
+# Tells Grafana to load every dashboard JSON found under `options.path` into the
+# "Systems Design Lab" folder on startup, so the RED overview is available
+# without importing anything by hand. Files are re-read every
+# `updateIntervalSeconds`, so edits to the JSON show up live.
+# Docs: https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards
+apiVersion: 1
+
+providers:
+  - name: lab-dashboards
+    orgId: 1
+    folder: "Systems Design Lab"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

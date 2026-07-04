@@ -1,0 +1,43 @@
+# Grafana Loki — logs backend (5, third pillar).
+#
+# Single-binary Loki with filesystem storage — no clustering, no object store.
+# It ingests logs over its native OTLP endpoint (/otlp/v1/logs), which the OTel
+# Collector pushes to. Loki indexes only *labels* (service, level); the log body
+# and high-cardinality fields (like trace_id) live as structured metadata, which
+# is what keeps the index tiny compared to full-text engines (Elasticsearch).
+
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: warn
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  # Required for OTLP ingestion: trace_id and other per-line fields are stored as
+  # structured metadata rather than blowing up the label index.
+  allow_structured_metadata: true
+  volume_enabled: true
+  retention_period: 24h

@@ -1,0 +1,23 @@
+{
+  "name": "systems-design-worker",
+  "version": "1.0.0",
+  "description": "RabbitMQ consumer for the async-job demo (async queues). Scalable.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.54.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.54.0",
+    "@opentelemetry/instrumentation-amqplib": "^0.44.0",
+    "@opentelemetry/instrumentation-http": "^0.54.0",
+    "@opentelemetry/instrumentation-pino": "^0.44.0",
+    "@opentelemetry/sdk-logs": "^0.54.0",
+    "@opentelemetry/sdk-node": "^0.54.0",
+    "amqp-connection-manager": "^4.1.14",
+    "amqplib": "^0.10.4",
+    "pino": "^9.5.0"
+  }
+}

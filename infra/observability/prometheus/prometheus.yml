@@ -1,0 +1,31 @@
+# Prometheus scrape config for 5.
+# Scrapes the app tier (RED metrics from /metrics), cAdvisor (container USE),
+# and postgres-exporter (DB internals). Any service that ships /metrics — including
+# ones you scaffold from the template (§6a) — is picked up by the app job via
+# Docker DNS returning all replica IPs.
+
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: app
+    metrics_path: /metrics
+    # `app` resolves to every scaled replica; dns_sd keeps the target list fresh.
+    dns_sd_configs:
+      - names: ["app"]
+        type: A
+        port: 3000
+        refresh_interval: 10s
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
+  - job_name: postgres
+    static_configs:
+      - targets: ["postgres-exporter:9187"]

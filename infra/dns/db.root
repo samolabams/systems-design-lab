@@ -1,0 +1,25 @@
+; Root zone for the DNS mini-internet.
+; The root server knows almost nothing about names — it only knows WHO to ask.
+; For anything under shop.internal. it hands back a *referral*: the NS record
+; naming the authoritative server, plus a "glue" A record giving that server's
+; IP (so the client can actually reach it). This is the top of the DNS
+; hierarchy in miniature.
+$ORIGIN .
+$TTL 60
+@   IN  SOA a.root-servers.lab. admin.root-servers.lab. (
+        1          ; serial
+        3600       ; refresh
+        600        ; retry
+        604800     ; expire
+        60 )       ; minimum TTL
+
+; The root's own name server.
+@                    IN  NS  a.root-servers.lab.
+a.root-servers.lab.  IN  A   172.30.53.2
+
+; Delegation: "shop.internal. is not mine — ask ns1.shop.internal., which lives
+; at 172.30.53.3." The A record below the NS is the glue that breaks the
+; chicken-and-egg problem (you can't resolve ns1.shop.internal. without first
+; knowing where shop.internal. lives).
+shop.internal.       IN  NS  ns1.shop.internal.
+ns1.shop.internal.   IN  A   172.30.53.3

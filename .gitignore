@@ -1,0 +1,25 @@
+# Local env (copy of .env.example with secrets/tunables)
+.env
+
+# Node
+node_modules/
+npm-debug.log*
+
+# TLS certs (M13) — generated, never committed
+infra/gateway/certs/
+*.pem
+*.key
+*.crt
+
+# Docker volumes / local data
+volumes/
+data/
+
+# Demo backup of the gateway config (m0 demo.sh restores from this)
+infra/gateway/nginx/nginx.conf.orig
+
+# OS / editor cruft
+.DS_Store
+*.swp
+.idea/
+.vscode/

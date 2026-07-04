@@ -1,0 +1,9 @@
+# Root name server (tier 0 of the hierarchy). Authoritative for the root zone
+# ".", which contains only a delegation to the shop.internal. authoritative
+# server. Queries for anything under shop.internal. get a referral, not an
+# answer — the root points the way, it does not resolve.
+. {
+    file /etc/coredns/db.root
+    log
+    errors
+}

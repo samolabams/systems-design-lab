@@ -1,0 +1,559 @@
+# Systems Design Lab — single Compose file: always-on base + profile-gated
+# services. A module's Make target == its modules/<slug>/ folder name; modules
+# that add services also use the same Compose profile name.
+#
+#   Base (no profile):  gateway -> app -> pgbouncer -> postgres-primary
+#   make replication-failover / async-queues / ...  add only the services
+#   that module needs.
+#
+# Networking (DMZ, §3):
+#   frontend  — edge network; the gateway is published here.
+#   backend   — internal: true; DBs/queues attach here, unreachable from host.
+
+name: systems-design
+
+x-app-base: &app-base
+  build:
+    context: ./apps/url-shortener
+  environment:
+    PORT: "3000"
+    DATABASE_URL: ${DATABASE_URL:-postgres://app:app@pgbouncer:6432/app}
+    DATABASE_REPLICA_URL: ${DATABASE_REPLICA_URL:-}
+    AMQP_URL: ${AMQP_URL:-}
+    REDIS_URL: ${REDIS_URL:-}
+    SLOW: ${SLOW:-0}
+    SLOW_MS: ${SLOW_MS:-750}
+    # observability traces/logs — the app is always instrumented; it exports OTLP to the
+    # collector, which only runs under the observability profile. When the
+    # collector is absent, exports fail silently (OTel's default diag is a no-op)
+    # so every other profile is unaffected.
+    OTEL_SERVICE_NAME: app
+    OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  networks:
+    - backend
+  restart: unless-stopped
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+    internal: true
+  # DNS DNS mini-internet — dedicated subnet so delegation glue records can name
+  # fixed IPs (172.30.53.2/.3/.4/.5). Only attached under the dns profile.
+  dnsnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.53.0/24
+
+volumes:
+  pg_primary_data:
+  pg_replica_data:
+  rabbitmq_data:
+  redis_data:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
+  minio_data:
+  qdrant_data:
+  grafana_data:
+  prometheus_data:
+  tempo_data:
+  loki_data:
+
+services:
+  # ===========================================================================
+  # BASE (always on)
+  # ===========================================================================
+  gateway:
+    image: nginx:1.27-alpine
+    depends_on:
+      - app
+    volumes:
+      - ./infra/gateway/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "${GATEWAY_HTTP_PORT:-8080}:80"
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  app:
+    <<: *app-base
+    # No published ports: the gateway is the only entry point (§4).
+
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.23.1-p2
+    depends_on:
+      - postgres-primary
+    volumes:
+      - ./infra/database/postgres/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./infra/database/postgres/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    networks:
+      - backend
+    restart: unless-stopped
+
+  postgres-primary:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    command:
+      - "postgres"
+      - "-c"
+      - "config_file=/etc/postgresql/postgresql.conf"
+      - "-c"
+      - "hba_file=/etc/postgresql/pg_hba.conf"
+    volumes:
+      - pg_primary_data:/var/lib/postgresql/data
+      - ./infra/database/postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./infra/database/postgres/primary/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./infra/database/postgres/primary/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ===========================================================================
+  # load balancing — load balancing contrast: HAProxy gateway (active health checks)
+  # ===========================================================================
+  haproxy:
+    image: haproxy:2.9-alpine
+    profiles: ["load-balancing-haproxy"]
+    depends_on:
+      - app
+    volumes:
+      - ./infra/gateway/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "${HAPROXY_HTTP_PORT:-8082}:80"
+      - "${HAPROXY_STATS_PORT:-8404}:8404"
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  # ===========================================================================
+  # replication and failover — streaming replication (Postgres standby)
+  # ===========================================================================
+  postgres-replica:
+    image: postgres:16-alpine
+    profiles: ["replication-failover"]
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    environment:
+      PRIMARY_HOST: postgres-primary
+      PRIMARY_PORT: "5432"
+      REPL_USER: ${REPL_USER:-replicator}
+      REPL_PASSWORD: ${REPL_PASSWORD:-replicator}
+      PGDATA: /var/lib/postgresql/data
+    entrypoint: ["/bin/bash", "/setup-replica.sh"]
+    volumes:
+      - pg_replica_data:/var/lib/postgresql/data
+      - ./infra/database/postgres/replica/setup-replica.sh:/setup-replica.sh:ro
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # ===========================================================================
+  # async queues — async processing (RabbitMQ + scalable workers)
+  # ===========================================================================
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    profiles: ["async-queues"]
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-app}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-app}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "${RABBITMQ_UI_PORT:-15672}:15672"
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 15s
+      retries: 12
+      start_period: 60s
+
+  worker:
+    build:
+      context: ./apps/worker
+    profiles: ["async-queues"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      AMQP_URL: ${AMQP_URL:-amqp://app:app@rabbitmq:5672}
+      DATABASE_URL: ${DATABASE_URL:-postgres://app:app@pgbouncer:6432/app}
+      PREFETCH: ${PREFETCH:-1}
+      # observability traces/logs: the worker is instrumented too, so a job's trace links
+      # back to the app request that enqueued it (context rides the AMQP message).
+      OTEL_SERVICE_NAME: worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # ===========================================================================
+  # service discovery — service discovery & health-based routing (Consul registry)
+  # ===========================================================================
+  # Single-node Consul in -dev mode: it's the service registry the static Nginx
+  # upstream in load balancing lacked. App replicas are registered with HTTP health checks;
+  # Consul evicts unhealthy ones so discovery only ever returns live instances.
+  consul:
+    image: hashicorp/consul:1.19
+    profiles: ["service-discovery"]
+    command: ["agent", "-dev", "-client=0.0.0.0", "-log-level=warn"]
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # ===========================================================================
+  # caching / rate limiting — Redis (cache, rate-limit store, pub/sub bus, geo index)
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    profiles: ["caching", "rate-limiting"]
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # ===========================================================================
+  # edge caching — edge / CDN caching (reverse-proxy cache in front of the gateway)
+  # ===========================================================================
+  # A second Nginx that CACHES origin responses and answers repeat requests
+  # itself, so the origin (gateway -> app) only sees the first one. This is a
+  # CDN edge node in miniature. The on-disk cache lives in a tmpfs so it starts
+  # empty every run.
+  edge:
+    image: nginx:1.27-alpine
+    profiles: ["edge-caching"]
+    depends_on:
+      - gateway
+    volumes:
+      - ./infra/gateway/edge/edge.conf:/etc/nginx/nginx.conf:ro
+    tmpfs:
+      - /var/cache/nginx
+    ports:
+      - "${EDGE_HTTP_PORT:-8082}:80"
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  # ===========================================================================
+  # object storage — object storage (MinIO, S3-compatible)
+  # ===========================================================================
+  # A flat bucket/key blob store with an S3 HTTP API. Large binaries (images,
+  # backups) belong here, NOT in Postgres rows. The demo also generates presigned
+  # URLs so clients read/write objects directly, off the app's critical path.
+  # Console UI on :9101.
+  minio:
+    image: minio/minio:RELEASE.2024-06-13T22-53-53Z
+    profiles: ["object-storage"]
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9101}:9001"
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================================================
+  # vector store — vector store (Qdrant, specialized local vector database)
+  # ===========================================================================
+  # Embeddings and similarity retrieval belong in a vector index/store, not in the
+  # primary relational database. This local Qdrant service makes nearest-neighbor
+  # lookup and metadata filtering observable without a cloud dependency.
+  qdrant:
+    image: qdrant/qdrant:v1.11.5
+    profiles: ["vector-store"]
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      - "${QDRANT_HTTP_PORT:-6333}:6333"
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  # ===========================================================================
+  # observability — observability (three pillars: metrics + traces + logs)
+  # ===========================================================================
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    profiles: ["observability"]
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      # Exemplars carry a trace_id on the histogram sample, so a latency spike in
+      # Grafana links straight to the exact trace in Tempo (metric -> trace).
+      - "--enable-feature=exemplar-storage"
+    volumes:
+      - ./infra/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    # No host port: Prometheus lives on the internal `backend` network only.
+    # Grafana (the single host-reachable UI) queries it; explore it there.
+    networks:
+      - backend
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    profiles: ["observability"]
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    profiles: ["observability"]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - backend
+    restart: unless-stopped
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    profiles: ["observability"]
+    depends_on:
+      - postgres-primary
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@postgres-primary:5432/${POSTGRES_DB:-app}?sslmode=disable"
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # --- Third pillar: traces & logs (metric -> trace -> log pivot) -------------
+  # The app/worker emit OTLP; the collector fans out to Tempo (traces) and Loki
+  # (logs). Grafana ties all three together so one slow request is visible as a
+  # metric spike, then a trace, then its log lines.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    profiles: ["observability"]
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./infra/observability/otel-collector/otel-collector-config.yaml:/etc/otel/config.yaml:ro
+    depends_on:
+      - tempo
+      - loki
+    networks:
+      - backend
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.6.0
+    profiles: ["observability"]
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./infra/observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    networks:
+      - backend
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.2.0
+    profiles: ["observability"]
+    command: ["-config.file=/etc/loki/loki-config.yaml"]
+    volumes:
+      - ./infra/observability/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # ===========================================================================
+  # leader election — leader election & replica sets (MongoDB lab implementation, 3 nodes)
+  # ===========================================================================
+  # Three mongod nodes form replica set rs0. Unlike Postgres's manual failover
+  # (replication and failover), Mongo runs a Raft-like election and promotes a new primary on its own
+  # when one dies. No keyfile/auth: the set lives on the internal backend network.
+  mongo1: &mongo-node
+    image: mongo:7
+    profiles: ["leader-election-replica-sets"]
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--quiet"]
+    volumes:
+      - mongo1_data:/data/db
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 15s
+      retries: 12
+      start_period: 60s
+
+  mongo2:
+    <<: *mongo-node
+    volumes:
+      - mongo2_data:/data/db
+
+  mongo3:
+    <<: *mongo-node
+    volumes:
+      - mongo3_data:/data/db
+
+  # One-shot: configures rs0 across the three nodes, then exits 0.
+  mongo-init:
+    image: mongo:7
+    profiles: ["leader-election-replica-sets"]
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    entrypoint: ["bash", "/init-replica.sh"]
+    volumes:
+      - ./infra/database/mongo/init-replica.sh:/init-replica.sh:ro
+    networks:
+      - backend
+    restart: "no"
+
+  # ===========================================================================
+  # event streaming — event log & streaming (Kafka in KRaft mode + UI)
+  # ===========================================================================
+  # Single-broker Kafka (no ZooKeeper — KRaft mode). Contrast with RabbitMQ (async queues):
+  # a partitioned, replayable commit log with consumer groups, not a
+  # queue-and-delete broker. Uses the official Apache image (env vars are the raw
+  # Kafka property names, upper-cased with KAFKA_ prefix). Logs are ephemeral —
+  # the demo's replay happens within a single run, so no volume is needed.
+  kafka:
+    image: apache/kafka:3.8.0
+    profiles: ["event-streaming", "message-delivery-semantics"]
+    environment:
+      KAFKA_NODE_ID: "0"
+      KAFKA_PROCESS_ROLES: "controller,broker"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "0@kafka:9093"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 15s
+      retries: 12
+      start_period: 60s
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    profiles: ["event-streaming", "message-delivery-semantics"]
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: rs0
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    ports:
+      - "${KAFKA_UI_PORT:-8081}:8080"
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  # ===========================================================================
+  # DNS — DNS & name resolution (a self-contained "mini-internet")
+  # ===========================================================================
+  # Three CoreDNS servers on a dedicated network with static IPs (so the
+  # delegation glue records are deterministic) model the DNS hierarchy:
+  #   dns-root (172.30.53.2)     — root zone; only DELEGATES to the authoritative
+  #   dns-auth (172.30.53.3)     — authoritative for shop.internal.; real records
+  #   dns-resolver (172.30.53.4) — caching resolver the client actually queries
+  # dns-tools is a netshoot box with `dig` for running the queries.
+  dns-root:
+    image: coredns/coredns:1.11.3
+    profiles: ["dns"]
+    command: ["-conf", "/etc/coredns/Corefile"]
+    volumes:
+      - ./infra/dns/Corefile.root:/etc/coredns/Corefile:ro
+      - ./infra/dns/db.root:/etc/coredns/db.root:ro
+    networks:
+      dnsnet:
+        ipv4_address: 172.30.53.2
+    restart: unless-stopped
+
+  dns-auth:
+    image: coredns/coredns:1.11.3
+    profiles: ["dns"]
+    command: ["-conf", "/etc/coredns/Corefile"]
+    volumes:
+      - ./infra/dns/Corefile.auth:/etc/coredns/Corefile:ro
+      - ./infra/dns/db.shop.internal:/etc/coredns/db.shop.internal:ro
+    networks:
+      dnsnet:
+        ipv4_address: 172.30.53.3
+    restart: unless-stopped
+
+  dns-resolver:
+    image: coredns/coredns:1.11.3
+    profiles: ["dns"]
+    command: ["-conf", "/etc/coredns/Corefile"]
+    volumes:
+      - ./infra/dns/Corefile.resolver:/etc/coredns/Corefile:ro
+    ports:
+      - "${DNS_RESOLVER_PORT:-5354}:53/udp"
+      - "${DNS_RESOLVER_PORT:-5354}:53/tcp"
+    networks:
+      dnsnet:
+        ipv4_address: 172.30.53.4
+    restart: unless-stopped
+
+  dns-tools:
+    image: nicolaka/netshoot:v0.13
+    profiles: ["dns"]
+    command: ["sleep", "infinity"]
+    networks:
+      dnsnet:
+        ipv4_address: 172.30.53.5
+    restart: unless-stopped

@@ -1,0 +1,15 @@
+# Caching resolver — the server a client actually talks to. A real recursive
+# resolver walks the hierarchy itself (root -> TLD -> authoritative) on the
+# client's behalf. CoreDNS has no built-in recursor, so here it stands in for
+# one by *forwarding* to the authoritative server — the key point is the
+# same: the client asks once and the resolver does the work and caches it.
+#
+# The cache plugin is what makes the TTL demo work: the first lookup is fetched
+# from upstream, later lookups are answered from cache with a TTL that counts
+# DOWN as it ages — visible proof of caching.
+. {
+    cache 30
+    forward . 172.30.53.3
+    log
+    errors
+}

@@ -1,0 +1,45 @@
+# OpenTelemetry Collector — the single telemetry pipeline (5).
+#
+# Key point: the app speaks ONE protocol (OTLP) and never knows which
+# backend stores its telemetry. The collector receives OTLP traces + logs from
+# the app and worker, then fans them out — traces to Tempo, logs to Loki.
+# Swapping Tempo for Jaeger, or Loki for Elasticsearch, is a one-line exporter
+# change here; the instrumented app is untouched. That decoupling is the whole
+# reason a collector sits in the middle.
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch: {} # buffer and send in batches — fewer, larger exports
+
+exporters:
+  # Traces -> Tempo (OTLP gRPC).
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  # Logs -> Loki (native OTLP HTTP endpoint).
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+    tls:
+      insecure: true
+
+service:
+  telemetry:
+    logs:
+      level: warn
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/tempo]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/loki]

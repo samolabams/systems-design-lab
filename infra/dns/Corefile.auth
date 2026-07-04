@@ -1,0 +1,11 @@
+# Authoritative name server for shop.internal. It holds the real records and
+# answers with the "aa" (authoritative answer) flag set. The loadbalance plugin
+# can rotate the order of the two www A records across repeated responses, which
+# is how DNS itself spreads clients across backends (DNS-level load balancing,
+# see load balancing).
+shop.internal:53 {
+    file /etc/coredns/db.shop.internal
+    loadbalance round_robin
+    log
+    errors
+}
