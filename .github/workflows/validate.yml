@@ -1,0 +1,93 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check shell syntax
+        run: find modules scripts -name '*.sh' -print0 | xargs -0 bash -n
+
+      - name: Check JavaScript syntax
+        run: |
+          find apps modules scripts -name '*.js' \
+            -not -path '*/node_modules/*' \
+            -not -path '*/load/*' \
+            -print0 | xargs -0 -n1 node --check
+
+      - name: Validate Docker Compose config
+        run: docker compose config --quiet
+
+      - name: Build app images
+        run: docker compose build app worker
+
+      - name: Check Markdown local links
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const root = process.cwd();
+          const ignored = new Set(['.git', 'node_modules']);
+          const failures = [];
+          const linkPattern = /!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+
+          function walk(dir, out = []) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              if (ignored.has(entry.name)) continue;
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) walk(full, out);
+              else if (entry.isFile() && entry.name.endsWith('.md')) out.push(full);
+            }
+            return out;
+          }
+
+          for (const file of walk(root)) {
+            const text = fs.readFileSync(file, 'utf8');
+            let match;
+            while ((match = linkPattern.exec(text))) {
+              const raw = match[1];
+              if (/^(https?:|mailto:|tel:|#)/i.test(raw)) continue;
+
+              const targetPart = raw.split('#')[0];
+              if (!targetPart) continue;
+
+              let decoded;
+              try {
+                decoded = decodeURIComponent(targetPart);
+              } catch {
+                decoded = targetPart;
+              }
+
+              const base = decoded.startsWith('/') ? root : path.dirname(file);
+              const target = path.resolve(base, decoded);
+
+              if (!target.startsWith(root) || !fs.existsSync(target)) {
+                failures.push(`${path.relative(root, file)} -> ${raw}`);
+              }
+            }
+          }
+
+          if (failures.length) {
+            console.error(failures.join('\n'));
+            process.exit(1);
+          }
+
+          console.log('markdown local links ok');
+          NODE
