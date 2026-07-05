@@ -3,8 +3,6 @@
 **Track:** Components
 **Prerequisites:** [Databases](../databases/README.md)
 
-> **Status:** Runnable - inspects the base data path and maps pressures to scaling mechanisms.
-
 ## Outcome
 
 After this module, you should be able to reason about database scaling as a decision tree rather than a list of disconnected techniques. You should be able to explain:
@@ -203,8 +201,8 @@ scaling are different problems.
 
 ## Practice experiments
 
-1. Given "reads are high but writes are fine," choose between replication and failover and caching and
-	justify the first experiment.
+1. Given "reads are high but writes are fine," choose whether to investigate
+	replication and failover, caching, or async queues first, and justify the choice.
 2. Given "one query is slow," explain why an index comes before sharding.
 3. Given "writes arrive in bursts," explain why async queues may help without increasing
 	total write capacity.

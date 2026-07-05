@@ -3,8 +3,6 @@
 **Track:** Components
 **Prerequisites:** none
 
-> **Status:** Runnable - explains database fundamentals, then inspects the lab's Postgres implementation.
-
 ## Outcome
 
 After this module, you should understand a database as a concrete
@@ -53,7 +51,9 @@ foundation:
 
 ## Concept
 
-A database is a system that stores data and lets applications retrieve or change it safely. Different database families organize data differently.
+A database is a system that stores data and lets applications retrieve or change
+it safely. Databases are usually classified by **data model**: the structure they
+use to represent data and the operations they optimize for.
 
 | Model | Shape | Good fit | Common trade-off |
 |---|---|---|---|

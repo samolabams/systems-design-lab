@@ -3,8 +3,6 @@
 **Track:** Components
 **Prerequisites:** [Databases](../databases/README.md), [Database scaling](../database-scaling/README.md)
 
-> **Status:** Runnable - demonstrates shard routing, hot keys, and rebalancing behavior.
-
 ## Outcome
 
 After this module, you should understand partitioning and sharding as deliberate responses to write, storage, or key-distribution limits. You should be able to explain:
@@ -19,7 +17,7 @@ After this module, you should understand partitioning and sharding as deliberate
 
 1. A sharding demonstration that maps keys to data partitions.
 2. Commands that show which shard owns which key.
-3. A hot-key or uneven-distribution scenario for reasoning about balance.
+3. An uneven-distribution scenario for reasoning about balance.
 4. A comparison between partitioning for manageability and sharding for scale.
 
 ## Why this matters
@@ -43,13 +41,11 @@ share, approximately `1/N` of the keys.
   of, say, 0..2³²). A key is owned by the **next node clockwise**. Adding a node
   only captures the arc between it and its predecessor, so only the keys in that
   arc move — roughly `K/N`.
-- **Virtual nodes** — to keep arcs even (a ring of 4 random points is lumpy), each
-  physical node is placed at many points (e.g. 150) around the ring. More vnodes →
-  smoother distribution and smoother rebalancing. Vnodes also prevent a
-  **cascading failure**: with one point per node, a dead node dumps its *entire*
-  load onto the single next node clockwise, which can then tip over too. Spread
-  across 150 points, a dead node's load fans out across *many* survivors, so no
-  single node inherits the whole burden.
+- **Virtual nodes** — multiple hash-ring positions assigned to one physical
+  node. Placing each physical node at many positions (for example, 150) smooths
+  uneven ownership ranges and reduces rebalancing spikes. It also reduces
+  cascading failure risk: when one physical node fails, its key ranges spread
+  across many successors instead of overloading one neighboring node.
 - **Replication** — real systems also put each key on the next R nodes clockwise
   for redundancy; consistent hashing makes that placement natural.
 
@@ -77,7 +73,7 @@ pseudocode above. It hashes 10,000 keys across 4 nodes two ways — modulo and a
 consistent-hash ring with 150 vnodes per node — then adds a 5th node and
 **counts how many keys changed owner** under each scheme. The lesson does not
 require reading or modifying the implementation. `demo.sh` executes it in a
-temporary `node:22-alpine` container; the important output is the two
+temporary hardened Node container; the important output is the two
 key-movement numbers, not the source code.
 
 > The **pseudocode above is the reference algorithm**. `shard.js` is one

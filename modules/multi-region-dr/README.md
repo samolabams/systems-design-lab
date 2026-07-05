@@ -4,10 +4,6 @@
 **Study role:** Advanced — study after availability, replication, and failure modes are understood.
 **Prerequisites:** [Replication and failover](../replication-failover/README.md)
 
-> **Status:** Runnable - [`demo.sh`](demo.sh) runs the full backup → destroy →
-> restore drill and reports the achieved RPO/RTO. Injected cross-region latency
-> (`tc`/toxiproxy) to make replication lag visible remains an optional extension.
-
 ## Outcome
 
 After this module, you should be able to explain RPO and RTO,

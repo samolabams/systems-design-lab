@@ -3,8 +3,6 @@
 **Track:** Components
 **Prerequisites:** none
 
-> **Status:** Runnable - starts Redis and demonstrates cache-aside reads, TTLs, and origin offload.
-
 ## Outcome
 
 After this module, you should understand caching as a general performance,

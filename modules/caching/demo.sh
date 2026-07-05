@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# €” Caching strategies & invalidation (Redis). Cache-aside hit/miss and
-# origin-offload demo. Pausable.
+# Caching strategies and invalidation (Redis). Cache-aside hit/miss and
+# origin-offload demo.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
 COMPOSE="docker compose --profile caching"
 REDIS="$COMPOSE exec -T redis redis-cli"
 
-echo "${BOLD}€” Cache-aside with Redis${RESET}"
+echo "${BOLD}Cache-aside with Redis${RESET}"
 note "Assumes 'make caching' is running (app + redis)."
 
 hits() { curl -s "$GATEWAY/metrics" | awk -F'[ ]' '/cache_requests_total\{.*result="hit"/ {print $2}' | tail -1; }

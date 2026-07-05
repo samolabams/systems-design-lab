@@ -2,9 +2,6 @@
 
 **Track:** Capstones
 
-> **Status:** Design exercise - there is no predefined demo; produce a design
-> using the design method and the components linked below.
-
 ## Before you start
 
 Complete or skim these modules first: [The design method](../design-method/README.md),

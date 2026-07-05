@@ -4,9 +4,6 @@
 **Prerequisites:** none for metrics and logs; the cross-service trace walkthrough
 also starts the queue/worker path from [async queues](../async-queues/README.md).
 
-> **Status:** Runnable - starts the observability backends and walks through a
-> metric-to-trace-to-log investigation.
-
 ## Outcome
 
 After this module, you should understand observability as a method
@@ -22,10 +19,10 @@ explain:
 
 ## What you will build or run
 
-1. A local observability stack with metrics, traces, logs, and dashboards.
-2. Requests that generate telemetry from the gateway and app.
-3. Queries or dashboards that connect symptoms to service behavior.
-4. A mental model for signals, labels, cardinality, and debugging workflow.
+1. A local observability stack with Prometheus, Grafana, Tempo, Loki, and the collector.
+2. Requests that generate metrics, traces, and structured logs from the gateway, app, and worker.
+3. A metric-to-trace-to-log investigation that connects a symptom to one request path.
+4. Cardinality and label examples that show what belongs in metrics versus traces or logs.
 
 ## Why this matters
 
@@ -38,9 +35,10 @@ removed."
 
 ## Concept
 
-Observability rests on **three signals**. The real skill is following one user
-symptom across those signals: a metric says something changed, a trace shows the
-request path, and logs provide detailed events from the services on that path.
+Observability is the ability to understand a system's internal behavior from the
+signals it emits. It commonly rests on **three signals**: metrics, traces, and
+logs. A metric shows that behavior changed, a trace shows the request path, and
+logs provide detailed events from services on that path.
 
 - **Metrics** — low-cost, aggregated numbers sampled over time. `prometheus` scrapes
   the app's `/metrics` for RED (**R**ate, **E**rrors, **D**uration — the three
@@ -54,8 +52,9 @@ request path, and logs provide detailed events from the services on that path.
   **OTLP** (OpenTelemetry's wire format) to the **collector**, which forwards
   them to **Tempo**, where traces are stored.
   Crucially, the trace follows the request across HTTP calls and even through the
-  RabbitMQ message it publishes, so `POST /jobs` shows up as one trace that spans
-  app → RabbitMQ → worker.
+  RabbitMQ message it publishes, so a gateway request to `POST /api/jobs` maps to
+  the app's internal `POST /jobs` route and shows up as one trace spanning app →
+  RabbitMQ → worker.
 - **Logs** — the app's structured stdout is tagged with the current `trace_id` by
   pino, then shipped over OTLP to the collector and on to **Loki**, the log store.
 
@@ -94,7 +93,9 @@ with `{service_name=~".+"} | trace_id="<id>"` — a `|=` line filter would miss 
 because the id is not in the body. The `=~".+"` selector spans **app and worker**,
 so a cross-service job trace surfaces every service's logs in one query.
 
-The app and worker are **always** instrumented (`src/tracing.js`); this profile
+The app and worker are **always** instrumented
+([apps/url-shortener/src/tracing.js](../../apps/url-shortener/src/tracing.js) and
+[apps/worker/src/tracing.js](../../apps/worker/src/tracing.js)); this profile
 enables the backends. In every other profile the OTLP export target is absent,
 so spans/logs are dropped silently — OpenTelemetry's default diagnostic logger is
 a no-op — and the app is unaffected.
@@ -114,9 +115,9 @@ make observability
 The output of `pwd` should end with `systems-design`.
 
 `make observability` starts the observability backends. The guided demo also
-brings up the async queue profile so `POST /jobs` can produce a trace that spans
-the app, broker, and worker. Without the queue path, the metrics dashboard still
-works, but the cross-service trace is incomplete.
+brings up the async queue profile so `POST /api/jobs` can produce a trace that
+spans the app, broker, and worker. Without the queue path, the metrics dashboard
+still works, but the cross-service trace is incomplete.
 
 Open the provisioned **"RED — gateway → app → DB"** dashboard and observe rate,
 5xx, and p50/p95/p99 move under load; the diamonds on the Duration panel are
@@ -132,7 +133,7 @@ commands as probes that create telemetry:
 |---|---|
 | `GET /health` | request metric, trace, structured log |
 | `POST /shorten` | app and database spans |
-| `POST /jobs` | app, RabbitMQ, and worker spans |
+| `POST /api/jobs` | app, RabbitMQ, and worker spans |
 | `SLOW=1 ... app` | visible latency spike and exemplar |
 
 ## How to read the output
@@ -154,7 +155,7 @@ the queue is working.
 2. Flip `SLOW=1` on the app and find the latency spike in the Duration panel,
    then click its **exemplar** → the exact slow **trace** in Tempo → its **logs**
    in Loki. One request, three views.
-3. `POST /jobs` in Tempo is a single trace across app → queue → worker — proof
+3. `POST /api/jobs` in Tempo is a single trace across app → queue → worker — proof
    that context propagated through the message broker.
 4. `cadvisor` shows which container is CPU-bound; `postgres-exporter` shows
    connection counts and tuple activity — the USE side of the picture.

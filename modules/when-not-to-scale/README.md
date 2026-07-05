@@ -3,8 +3,6 @@
 **Track:** Foundations
 **Prerequisites:** none
 
-> **Status:** Runnable - uses lab measurements to argue against premature scaling machinery.
-
 ## Outcome
 
 After this module, you should be able to argue against premature
@@ -14,10 +12,10 @@ justify it.
 
 ## What you will build or run
 
-1. A set of scenarios where scaling is not the first or best fix.
+1. A base-stack load check that tests whether extra infrastructure is justified.
 2. A checklist that separates product need, measurement, and engineering response.
-3. Examples where simpler changes beat new infrastructure.
-4. A decision habit for delaying complexity until evidence supports it.
+3. Examples where query tuning, indexes, product limits, or replicas beat new infrastructure.
+4. A decision statement that names the metric that would justify scaling later.
 
 ## Why this matters
 
@@ -139,8 +137,8 @@ hot repeated read may justify caching; slow background work may justify a queue.
 ## Further reading
 
 - "Use One Big Server" / scale-up arguments (e.g. https://specbranch.com/posts/one-big-server/)
-- "The Premature Optimization is the Root of All Evil" — Knuth, on resisting
-  speculative complexity (TAOCP / widely quoted).
+- "The Premature Optimization is the Root of All Evil" — Donald Knuth,
+  "Structured Programming with go to Statements" (ACM Computing Surveys, 1974).
 - *Designing Data-Intensive Applications*, Ch. 1 — "scaling up vs scaling out".
 
 ## Cleanup

@@ -23,3 +23,5 @@ infra/gateway/nginx/nginx.conf.orig
 *.swp
 .idea/
 .vscode/
+
+INSTRUCTIONS.MD

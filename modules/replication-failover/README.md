@@ -3,15 +3,13 @@
 **Track:** Components
 **Prerequisites:** [Databases](../databases/README.md), [Database scaling](../database-scaling/README.md)
 
-> **Status:** Runnable - starts a Postgres standby and demonstrates lag, read splitting, and manual failover.
-
 ## Outcome
 
 After this module, you should understand replication as a general data-tier
-mechanism, not as a cure for every database problem. You should be able to
+mechanism, not as a universal solution for every database pressure point. You should be able to
 explain:
 
-1. Why copied data can help with read scale and recovery.
+1. Why replicated data can help with read scale and recovery.
 2. Why one primary still limits write throughput.
 3. What replication lag is and how it causes read-after-write bugs.
 4. How manual failover differs from automatic leader election.
@@ -88,7 +86,7 @@ The output of `pwd` should end with `systems-design`.
 ## How to read the commands
 
 Read primary-side SQL as writes to the source of truth. Read replica-side SQL as
-evidence that WAL changes have been copied and replayed. Read `pg_promote()` as
+evidence that WAL changes have been transmitted to and replayed on the replica. Read `pg_promote()` as
 a role change: the standby stops following the old primary and becomes writable.
 
 The `DATABASE_REPLICA_URL` command changes the app's read path so redirects can

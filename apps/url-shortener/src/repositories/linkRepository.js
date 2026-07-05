@@ -5,7 +5,7 @@
  *
  * The repository pattern separates *what* the data is (the Link entity) from
  * *how* it is stored and retrieved (here). It exposes a collection-like
- * interface — insert, findByCode — and hides Knex, SQL, and the read/write
+ * interface — createOrFindByUrl, findByCode — and hides Knex, SQL, and the read/write
  * split behind it:
  *   - writes always go to the primary (writeDb)
  *   - reads go to a replica when configured (readDb), otherwise the primary
@@ -16,10 +16,19 @@
 const { writeDb, readDb } = require('../db');
 const Link = require('../models/Link');
 
-// Persist a new link on the primary. Throws on a duplicate code (Postgres
-// error 23505, unique_violation), which the caller catches to retry.
-async function insert(link) {
-  await writeDb('links').insert({ code: link.code, url: link.url });
+async function createOrFindByUrl(link) {
+  return writeDb.transaction(async (trx) => {
+    await trx.raw('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', [link.url]);
+    const existing = await trx('links')
+      .where({ url: link.url })
+      .orderBy('created_at', 'asc')
+      .orderBy('code', 'asc')
+      .first('code', 'url', 'created_at');
+    if (existing) return { link: Link.fromRow(existing), created: false };
+
+    await trx('links').insert({ code: link.code, url: link.url });
+    return { link, created: true };
+  });
 }
 
 // Look up a link by its code on the replica. Returns a Link entity or null.
@@ -28,4 +37,4 @@ async function findByCode(code) {
   return row ? Link.fromRow(row) : null;
 }
 
-module.exports = { insert, findByCode };
+module.exports = { createOrFindByUrl, findByCode };

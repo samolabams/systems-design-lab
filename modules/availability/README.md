@@ -3,10 +3,6 @@
 **Track:** Foundations
 **Prerequisites:** none
 
-> **Status:** Runnable - the **"SLO & error budget (availability)"** row in the provisioned
-> Grafana board computes the success-ratio SLI, remaining error budget, and the
-> burn rate live from the app's `http_requests_total`.
-
 ## Outcome
 
 After this module, you should be able to calculate downtime from

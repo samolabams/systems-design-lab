@@ -76,7 +76,7 @@ pause
 step "Fire an async job" "POST /jobs -> RabbitMQ -> worker, all under ONE trace"
 note "the trace context rides the AMQP message, so the worker span is a child of this request"
 for _ in $(seq 1 30); do
-  jobs_code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$GATEWAY/jobs" -H 'Content-Type: application/json' -d '{"task":"resize","n":1}' || true)
+  jobs_code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$GATEWAY/api/jobs" -H 'Content-Type: application/json' -d '{"task":"resize","n":1}' || true)
   [ "$jobs_code" = "202" ] && break
   sleep 2
 done
@@ -86,6 +86,7 @@ pause
 step "Make one request visibly slow" "SLOW=1 adds latency -> a high exemplar on the Duration panel"
 note "recreate just the app with injected latency (SLOW=1)…"
 run "SLOW=1 $COMPOSE up -d app >/dev/null 2>&1; echo 'app now slow'"
+wait_for_http "$GATEWAY/api/health" "slow app"
 note "sending a burst of slow requests to plant a fat p95/p99 exemplar…"
 run "for i in \$(seq 1 12); do curl -s -o /dev/null -X POST $GATEWAY/shorten -H 'Content-Type: application/json' -d '{\"url\":\"https://slow.example/'\$i'\"}'; done; echo 'slow burst sent'"
 pause

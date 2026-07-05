@@ -4,8 +4,6 @@
 **Study role:** Specialized - include when designs require semantic retrieval, recommendations, image similarity, or similar-item search.
 **Prerequisites:** none
 
-> **Status:** Runnable - starts Qdrant and demonstrates vector search over embedding-like data.
-
 ## Outcome
 
 After this module, you should understand a vector store as a specialized index

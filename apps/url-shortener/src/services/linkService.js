@@ -15,6 +15,19 @@ const cache = require('../cache');
 const { maybeSlow } = require('../util');
 
 const cacheKey = (code) => `link:${code}`;
+const MAX_URL_LENGTH = 2048;
+
+function normalizeUrl(value) {
+  if (!value || typeof value !== 'string') return null;
+  if (value.length > MAX_URL_LENGTH) return null;
+  try {
+    const parsed = new URL(value.trim());
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Create a short link for the given URL (write path; always the primary).
@@ -25,20 +38,29 @@ const cacheKey = (code) => `link:${code}`;
  * collides, or rethrows an unexpected database error for the caller to handle.
  *
  * @param {string} url
- * @returns {Promise<Link>} the persisted link
+ * @returns {Promise<{ link: Link, created: boolean }>} the persisted link and whether it was newly inserted
  */
 async function shorten(url) {
+  const normalizedUrl = normalizeUrl(url);
+  if (!normalizedUrl) {
+    const err = new Error('invalid url');
+    err.code = 'INVALID_URL';
+    throw err;
+  }
+
   await maybeSlow();
   for (let attempt = 0; attempt < 5; attempt++) {
-    const link = Link.forUrl(url);
+    const link = Link.forUrl(normalizedUrl);
     try {
-      await linkRepository.insert(link);
+      const { link: persisted, created } = await linkRepository.createOrFindByUrl(link);
       // Write-through of the new mapping. Links are immutable, so there is no
       // stale entry to invalidate.
-      await cache.set(cacheKey(link.code), link.url);
-      return link;
+      await cache.set(cacheKey(persisted.code), persisted.url);
+      return { link: persisted, created };
     } catch (err) {
-      if (err.code === '23505') continue; // unique_violation -> try a new code
+      if (err.code === '23505') {
+        continue; // code collision -> try a new code
+      }
       throw err; // unexpected error -> let the controller map it to a 500
     }
   }
@@ -55,6 +77,7 @@ async function shorten(url) {
  * @returns {Promise<string|null>} the URL, or null if the code is unknown
  */
 async function resolve(code) {
+  if (!Link.isValidCode(code)) return null;
   await maybeSlow();
   // 1. Ask the cache first.
   const cached = await cache.get(cacheKey(code));
@@ -67,4 +90,4 @@ async function resolve(code) {
   return link.url;
 }
 
-module.exports = { shorten, resolve };
+module.exports = { shorten, resolve, normalizeUrl };

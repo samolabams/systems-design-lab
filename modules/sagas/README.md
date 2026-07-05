@@ -4,9 +4,6 @@
 **Study role:** Advanced — microservices transaction design after queues, logs, and idempotency are understood.
 **Prerequisites:** [Async queues](../async-queues/README.md), [Event streaming](../event-streaming/README.md), [Message delivery semantics](../message-delivery-semantics/README.md)
 
-> **Status:** Runnable - a bash orchestrator drives a 3-step saga over Postgres,
-> forces a partial failure, and compensates the completed steps in reverse.
-
 ## Outcome
 
 After this module, you should understand sagas as the standard way
@@ -22,10 +19,10 @@ transaction. You should be able to explain:
 
 ## What you will build or run
 
-1. A multi-step workflow model where each step has a compensating action.
-2. A scenario where one step succeeds and a later step fails.
-3. A compensation path that restores business intent without a distributed transaction.
-4. A comparison between orchestration and choreography.
+1. A three-step order workflow with inventory, payment, and shipment transactions.
+2. A scenario where inventory and payment succeed but shipment fails.
+3. A compensation path that refunds payment and releases inventory without a distributed transaction.
+4. A comparison table for orchestration and choreography.
 
 ## Why this matters
 
@@ -37,13 +34,17 @@ consistent without a global transaction.
 
 ## Concept
 
+- **Compensating action** — application logic that semantically undoes a prior
+  committed step, such as refunding a payment or releasing reserved inventory. It
+  is not a transaction rollback; it is a new business action that restores the
+  intended outcome.
 - **Why not 2PC** — a *blocking* coordinator (every participant waits, holding its
   resources, until the coordinator says commit-or-abort), locks held across the
   network, and a single point of failure; it trades availability for an atomicity
   guarantee that many workflows do not require.
 - **Saga** — a sequence of local transactions, each publishing an event that
-  triggers the next. If a step fails, run **compensating actions** to undo the
-  prior steps (semantic rollback, not a true rollback).
+  triggers the next. If a step fails, run compensating actions for the prior
+  committed steps.
 - **Orchestration vs choreography** — a central orchestrator drives the steps, or
   services react to each other's events (choreography). Trade central clarity for
   decoupling.
@@ -51,6 +52,11 @@ consistent without a global transaction.
   retries are how a saga makes forward progress.
 - **Dual-write problem** — updating a DB and publishing an event are two writes
   that can diverge; the transactional outbox fixes it.
+
+The usual idempotency guard is a local transaction: insert a unique step key,
+perform the step only if that insert succeeds, and commit both together. If the
+same step is delivered again, the key already exists, so the handler skips the
+side effect.
 
 ## How it works
 

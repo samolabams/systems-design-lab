@@ -1,4 +1,4 @@
-//  €” a hand-rolled circuit breaker wrapping a flaky dependency.
+//  A hand-rolled circuit breaker wrapping a flaky dependency.
 //
 // Run with Node (no dependencies):  node breaker.js
 //

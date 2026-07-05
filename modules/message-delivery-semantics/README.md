@@ -4,8 +4,6 @@
 **Study role:** Advanced — study after replication, queues, and event streaming are understood.
 **Prerequisites:** [Event streaming](../event-streaming/README.md)
 
-> **Status:** Runnable - demonstrates outbox, deduplication, and effectively-once processing with the base database and event broker.
-
 ## Outcome
 
 After this module, you should understand message delivery semantics
@@ -27,10 +25,10 @@ delivery plus idempotent processing. You should be able to explain:
 
 ## What you will build or run
 
-1. A message-processing scenario with retries and duplicate delivery risk.
-2. A consumer group run that shows how messages are claimed and processed.
-3. An idempotency or deduplication path that makes repeated delivery safe.
-4. An outbox-style reasoning model for connecting database writes to message publication.
+1. A Postgres outbox table that records business writes and events in one transaction.
+2. A Kafka relay/replay flow that demonstrates at-least-once delivery and duplicate risk.
+3. A processed-events deduplication table that makes repeated delivery safe.
+4. Notification counts that prove the business side effect happens once per event.
 
 ## Why this matters
 
@@ -56,7 +54,7 @@ publish, consume, acknowledgement, retry, and crash behavior interact.
 | **At-most-once delivery** | A message is delivered zero or one time. | A crash or timeout can lose the message. | Use only when loss is acceptable. |
 | **At-least-once delivery** | A message is delivered one or more times. | Retries can create duplicates. | Make consumers idempotent. |
 | **Exactly-once delivery** | A message is delivered once and only once. | Usually not a realistic end-to-end broker claim across databases, services, and side effects. | Treat vendor claims carefully; ask what boundary the guarantee covers. |
-| **Effectively-once processing** | The message may be delivered more than once, but the business effect happens once. | Requires durable deduplication state. | Store an idempotency key before applying the side effect. |
+| **Effectively-once processing** | A message may be delivered more than once, but deduplication and idempotent handlers make the side effect occur once. | Requires durable deduplication state. | Store an idempotency key before applying the side effect. |
 
 The practical default is **at-least-once delivery plus idempotent processing**.
 The broker and relay retry when acknowledgements are uncertain, so the system

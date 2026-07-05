@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# €” Service discovery. load balancing's gateway used a
+# Service discovery. load balancing's gateway used a
 # static Nginx upstream that resolves once at boot; it can't track instances that
 # come and go. Here a Consul registry is the source of truth: each app replica is
 # registered with an HTTP health check, and discovery returns ONLY instances whose
 # check is passing. We scale to 3, register them, then stop one and watch Consul
-# evict it from the healthy set â€” the active health checking load balancing lacked. Pausable.
+# evict it from the healthy set.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
@@ -52,7 +52,7 @@ wait_gone() {  # id timeout_s
   return 1
 }
 
-echo "${BOLD}€” Service discovery${RESET}"
+echo "${BOLD}Service discovery${RESET}"
 note "Assumes 'make service-discovery' is running (base + Consul)."
 
 step "Scale the app tier to 3 replicas" "three interchangeable instances behind one service name"

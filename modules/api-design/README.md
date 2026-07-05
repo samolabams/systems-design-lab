@@ -3,10 +3,6 @@
 **Track:** Components
 **Prerequisites:** none
 
-> **Status:** Demonstration - a dependency-free Node script measures Protobuf vs
-> JSON wire size and GraphQL field selection. It does not start live gRPC or
-> GraphQL servers; it isolates the contract properties this module demonstrates.
-
 ## Outcome
 
 After this module, you should evaluate API style as a contract-design
@@ -45,11 +41,11 @@ trips, or painful versioning.
   Definition Language — a `.proto` file both sides compile against), runs over
   **HTTP/2** (a multiplexed, streaming version of HTTP), small + fast; great
   service-to-service, weaker for browsers and ad-hoc querying.
-- **GraphQL** — the client specifies exactly the fields it wants in one request;
-  kills over-fetching and round trips, but caching is harder and a careless query
-  can be expensive. Two named hazards: **N+1** (fetching a list, then firing one
-  more query *per item* — 1 + N queries instead of one) and **depth attacks** (a
-  deeply nested query that explodes into huge work).
+- **GraphQL** — the client specifies exactly the fields it wants in one request.
+  This reduces over-fetching and can reduce round trips, but caching is harder
+  and a careless query can be expensive. Two named hazards: **N+1** (fetching a
+  list, then firing one more query *per item* — 1 + N queries instead of one) and
+  **depth attacks** (a deeply nested query that expands into excessive work).
 - **Cross-cutting** — versioning (URL vs field deprecation vs proto field numbers),
   pagination (offset vs cursor), idempotency, and error semantics.
 

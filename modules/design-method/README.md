@@ -3,21 +3,19 @@
 **Track:** Foundations
 **Prerequisites:** none
 
-> **Status:** Concept exercise - no new infrastructure; apply the design method to system design exercises.
-
 ## Outcome
 
 After this module, you should be able to run a systems-design
 discussion in order: clarify requirements, estimate scale, draw a high-level
 design, choose components, analyze bottlenecks, and state trade-offs. The output
-should be a justified design, not a list of favorite technologies.
+should be a justified design artifact, not a list of favorite technologies.
 
 ## What you will build or run
 
 1. A repeatable design outline that starts from requirements instead of tools.
-2. A scope, workload, data, API, component, and trade-off checklist.
-3. A way to evaluate a design against constraints and failure cases.
-4. A rubric you can reuse for the capstone exercises.
+2. A checklist for scope, workload, data, API, components, bottlenecks, and trade-offs.
+3. A worked short-link example that turns requirements into an architecture sketch.
+4. A self-assessment rubric you can reuse for the capstone exercises.
 
 ## Why this matters
 
@@ -25,7 +23,7 @@ A systems-design discussion — in an interview or a real review — goes badly 
 it is improvised: a database choice is made before the QPS is known, or a
 queue nobody needed. A repeatable method keeps the conversation *driven*: clarify
 first, estimate, then justify each component against the numbers. This is the
-rubric used to self-assess every capstone (TinyURL capstone–distributed rate limiter capstone). Full version: [method.md](method.md).
+rubric used to self-assess every capstone (TinyURL capstone–distributed rate limiter capstone). Assessment rubric: [method.md](method.md).
 
 ## Concept
 

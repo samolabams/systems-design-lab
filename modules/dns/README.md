@@ -3,8 +3,6 @@
 **Track:** Components
 **Prerequisites:** none
 
-> **Status:** Runnable - starts the DNS lab and walks through name-resolution behavior.
-
 ## Outcome
 
 After this module, you should understand DNS as a name-resolution mechanism
@@ -173,7 +171,7 @@ This lab uses **CoreDNS**, a small DNS server that is configured by plugins. A
 CoreDNS configuration file is called a **Corefile**. Each block says which DNS
 zone the server handles and which plugins should run for queries in that zone.
 The DNS data itself lives in **zone files**, which contain records such as `A`,
-`CNAME`, `API gateway`, `NS`, and `SOA`.
+`CNAME`, `MX`, `NS`, and `SOA`.
 
 The structure is:
 
@@ -258,7 +256,7 @@ Read it from left to right:
 | `A` | the record type being requested; here, IPv4 addresses |
 
 Changing one part changes the question. For example, `@dns-root` asks the root
-server, `@dns-resolver` asks the resolver, and `API gateway` asks for mail-routing
+server, `@dns-resolver` asks the resolver, and `MX` asks for mail-routing
 records instead of IPv4 addresses.
 
 ## How to read the output
@@ -320,7 +318,7 @@ dig -p 5354 @127.0.0.1 +tcp www.shop.internal A
    glue A record. The root refers; it does not resolve.
 2. **Authoritative answer** — the same query against `@dns-auth` returns the
    real A records with the `aa` flag set.
-3. **Every record type** — walk A, AAAA, CNAME, API gateway, TXT, SRV, NS, SOA and see
+3. **Every record type** — walk A, AAAA, CNAME, MX, TXT, SRV, NS, SOA and see
    how each answers a different question about the one domain.
 4. **CNAME chase** — `dig @dns-auth api.shop.internal` returns the CNAME *and*
   the target's A records, because the resolver follows the alias.

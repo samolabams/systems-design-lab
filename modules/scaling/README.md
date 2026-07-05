@@ -3,8 +3,6 @@
 **Track:** Components
 **Prerequisites:** none
 
-> **Status:** Runnable - scales the app tier and measures the effect on request handling.
-
 ## Outcome
 
 After this module, you should understand scaling as a concrete
@@ -147,7 +145,7 @@ Docker Compose can run several copies of the same app service:
 make scale N=3
 ```
 
-That command expands the app tier to three replicas. The gateway still receives traffic on `localhost:8080`, and the app replicas remain internal. The `/health` endpoint returns the container hostname, so repeated requests show which replica answered.
+That command expands the app tier to three replicas. The gateway still receives traffic on `localhost:8080`, and the app replicas remain internal. The gateway routes `/api/health` to the app's internal `/health` endpoint, which returns the container hostname, so repeated requests show which replica answered.
 
 The important files and commands are:
 
@@ -157,7 +155,7 @@ The important files and commands are:
 | [infra/gateway/nginx/nginx.conf](../../infra/gateway/nginx/nginx.conf) | Gateway in front of app replicas | `proxy_pass`, Docker DNS resolver, `/api/*` routes |
 | [apps/url-shortener/src/controllers/healthController.js](../../apps/url-shortener/src/controllers/healthController.js) | Returns replica identity | `{ "host": "...", "role": "app" }` |
 | [modules/load-balancing](../load-balancing/README.md) | Explains traffic distribution | load balancing strategies and health checks |
-| [modules/api-gateway](../api-gateway/README.md) | Explains the front door | explicit gateway route mapping |
+| [modules/api-gateway](../api-gateway/README.md) | Explains the public entry point | explicit gateway route mapping |
 
 ## Run
 
@@ -243,12 +241,12 @@ This output proves _____ because _____.
 Example:
 
 ```text
-This output proves the app tier has multiple replicas because repeated /health responses show different hostnames.
+This output proves the app tier has multiple replicas because repeated `/api/health` responses show different hostnames.
 ```
 
 ## What to observe
 
-1. **Baseline** - with `N=1`, repeated `/health` requests should show one app hostname.
+1. **Baseline** - with `N=1`, repeated `/api/health` requests should show one app hostname.
 2. **Scale out** - with `N=3`, Docker runs several app containers from the same image.
 3. **Replica interchangeability** - each app container can answer the same `/health` request, which is why stateless replicas can share work.
 4. **Gateway sample** - repeated `/api/health` requests may show several app hostnames, or one repeated hostname if the gateway/DNS path is cached during the sample.

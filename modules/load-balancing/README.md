@@ -3,9 +3,6 @@
 **Track:** Components
 **Prerequisites:** none
 
-> **Status:** Runnable - demonstrates request distribution on the base stack;
-> the optional HAProxy contrast runs with `make load-balancing-haproxy`.
-
 ## Outcome
 
 After this module, you should understand load balancing as a request-routing
@@ -89,9 +86,9 @@ The main vocabulary:
   running copies of the same app.
 - **Upstream** — the set of backend replicas a proxy can send traffic to. Nginx
   and HAProxy both use this word.
-- **Gateway** — the front door of the system. In this lab, the gateway is the
-  Nginx container that receives traffic on `localhost:8080` and forwards it to
-  app replicas.
+- **Gateway** — the system entry point that receives client traffic before it
+   reaches internal services. In this lab, the gateway is the Nginx container on
+   `localhost:8080` that forwards requests to app replicas.
 
 Load balancing has two core jobs:
 
@@ -394,7 +391,7 @@ make base
   spreads traffic across servers in one cluster or data center. Global traffic
   steering, often implemented with DNS or GSLB, is a separate concern and belongs
   with DNS/multi-region DR context.
-- **TLS termination.** An L7 balancer can decrypt HTTPS at the front door so
+- **TLS termination.** An L7 balancer can decrypt HTTPS at the system edge so
   backends receive plain HTTP and do not each spend CPU on decryption. This
   centralizes certificates, but it also makes the balancer a trust boundary.
 

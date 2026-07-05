@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Load balancing. Pausable, step-by-step (§10).
+# Load balancing demonstration.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 

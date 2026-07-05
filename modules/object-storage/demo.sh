@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# €” Object storage. Large binary blobs do NOT belong in Postgres rows.
+# Object storage. Large binary blobs do not belong in Postgres rows.
 # They go to an object store (MinIO, S3-compatible) and are handed to clients via
-# time-limited PRESIGNED URLs so bytes never flow through the app. Pausable.
+# time-limited presigned URLs so bytes never flow through the app.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
@@ -24,7 +24,7 @@ MC() {
 # holding no MinIO credentials. Proves a presigned URL is self-authorising.
 app_get() { $COMPOSE exec -T app sh -c "wget -qO- '$1' 2>&1 || true"; }
 
-echo "${BOLD}€” Object storage${RESET}"
+echo "${BOLD}Object storage${RESET}"
 note "Assumes 'make object-storage' is running (base + MinIO)."
 
 step "Wait for the object store to be ready" "MinIO answers its health probe before we use it"

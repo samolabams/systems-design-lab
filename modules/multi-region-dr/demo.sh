@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# €” Multi-region, DR & backups. Backup -> destroy -> restore drill that
-# proves "replication is not a backup" and measures the achieved RPO/RTO. Pausable.
+# Multi-region, DR & backups. Backup -> destroy -> restore drill that
+# proves "replication is not a backup" and measures the achieved RPO/RTO.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
@@ -9,7 +9,7 @@ PRIMARY="$COMPOSE exec -T postgres-primary"
 REPLICA="$COMPOSE exec -T postgres-replica"
 BACKUP="/tmp/sdl-dr-backup.sql"
 
-echo "${BOLD}€” Disaster recovery: replication â‰  backup${RESET}"
+echo "${BOLD}Disaster recovery: replication is not backup${RESET}"
 note "Assumes 'make replication-failover' is running (primary + streaming standby)."
 
 count() { $1 psql -U app -d app -tAc 'SELECT count(*) FROM links;' 2>/dev/null | tr -d '[:space:]'; }

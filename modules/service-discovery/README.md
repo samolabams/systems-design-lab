@@ -3,9 +3,6 @@
 **Track:** Components
 **Prerequisites:** none
 
-> **Status:** Runnable - Consul registers three app replicas with HTTP health
-> checks; stopping one instance removes it from the healthy set.
-
 ## Outcome
 
 After this module, you should understand service discovery as
@@ -15,10 +12,10 @@ static gateway upstreams do not work well with autoscaling.
 
 ## What you will build or run
 
-1. A service lookup scenario where callers use names instead of fixed container addresses.
-2. Commands that show how services find each other on the Docker network.
-3. A changing-backend scenario that explains why discovery matters when replicas move.
-4. A contrast between DNS-style discovery and gateway routing.
+1. A Consul-backed service registry with app instances registered by health check.
+2. Lookup commands that return healthy app instances instead of fixed container addresses.
+3. A changing-backend scenario that explains why discovery matters when replicas move or fail.
+4. A contrast between registry-based discovery, DNS-style discovery, and gateway routing.
 
 ## Why this matters
 
@@ -37,13 +34,13 @@ checking and dynamic membership that load balancing's static configuration lacke
 - **Registration** — instances register on start and deregister on stop; a **TTL**
   (Time To Live — a lease that must be renewed, and expires if not) or health
   check evicts ones that crash.
-- **Passing instance** — an instance whose latest health check succeeded. Consul
-  returns only these instances when the query asks for healthy, routable service
-  members.
+- **Passing health check** — a health-check status meaning the latest probe or
+  lease renewal succeeded. A **passing instance** is a registered service
+  instance whose health checks currently pass, so it is eligible for routing.
 - **Health-based routing** — the balancer (or a sidecar) pulls healthy endpoints
-  from the registry and routes only to those — an **active** check (the system
-  probes each instance on a schedule), vs load balancing's **passive** approach (wait for a
-  request to fail, then eject after N errors).
+  from the registry and routes only to those. This usually depends on **active**
+  health checks, where the system probes each instance on a schedule, rather than
+  **passive** health detection, where failures are inferred from live requests.
 - **Client-side vs server-side discovery** — the client queries the registry and
   picks an instance, or a load balancer does it on the client's behalf.
 
@@ -115,7 +112,7 @@ needed for the registry to know membership changed.
 1. All three replicas register and show up as **passing** in Consul with no config
    edit — the registry discovered them.
 2. A stopped instance fails its health check and is removed from the passing set
-   within a couple of check intervals — discovery never returns a dead instance.
+  within a couple of check intervals — discovery no longer returns the failed instance.
 3. Contrast with load balancing: the static `upstream` resolved once at boot and could only
    detect failure passively, after serving errors.
 

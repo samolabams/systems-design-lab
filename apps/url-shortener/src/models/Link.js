@@ -11,9 +11,12 @@
  * means the same class works whatever the storage is.
  */
 
-// Short-code alphabet. Math.random is fine here: collisions are rare and the
-// caller retries on the primary-key violation rather than pre-checking.
+const crypto = require('crypto');
+
+// Short-code alphabet. The service retries on primary-key collisions, but the
+// generator should still use a uniform source so codes are not biased.
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const CODE_PATTERN = /^[A-Za-z0-9]{7}$/;
 
 class Link {
   constructor({ code, url, createdAt = null }) {
@@ -25,8 +28,12 @@ class Link {
   // Generate a random short code.
   static makeCode(len = 7) {
     let out = '';
-    for (let i = 0; i < len; i++) out += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+    for (let i = 0; i < len; i++) out += ALPHABET[crypto.randomInt(ALPHABET.length)];
     return out;
+  }
+
+  static isValidCode(code) {
+    return typeof code === 'string' && CODE_PATTERN.test(code);
   }
 
   // Factory: a new link for the given URL with a freshly minted code.

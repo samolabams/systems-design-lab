@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Scaling: vertical vs horizontal. Pausable, step-by-step.
+# Scaling: vertical vs horizontal.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 

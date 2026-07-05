@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# €” Kafka: partitions, consumer groups, and replay from offset 0.
-# Contrast with async queues's queue-and-delete model. Pausable.
+# Event streaming: Kafka partitions, consumer groups, and replay from offset 0.
+# Contrast with async queues' queue-and-delete model.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
@@ -11,7 +11,7 @@ K="$COMPOSE exec -T -e PATH=/opt/kafka/bin:/usr/bin:/bin kafka"
 BS="--bootstrap-server localhost:9092"
 TOPIC="events"
 
-echo "${BOLD}€” Event log & streaming (Kafka)${RESET}"
+echo "${BOLD}Event log & streaming (Kafka)${RESET}"
 note "Assumes 'make event-streaming' is running. Kafka UI: http://localhost:8081"
 
 step "Create a topic with 3 partitions" "ordering is per-partition; partitions give parallelism"

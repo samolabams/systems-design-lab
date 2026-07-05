@@ -2,9 +2,6 @@
 
 **Track:** Capstones
 
-> **Status:** Design exercise - there is no predefined demo; produce a design
-> using the design method and the components linked below.
-
 ## Before you start
 
 Complete or skim these modules first: [The design method](../design-method/README.md),
@@ -57,13 +54,14 @@ the result with the design method self-assessment rubric:
    so counting never slows the redirect.
 6. **Scale & resilience** — replicas ([scaling](../scaling/README.md)), DB read replicas
    ([replication and failover](../replication-failover/README.md)), and sharding
-   ([partitioning and sharding](../partitioning-sharding/README.md)) if the *keyspace* (the full set of possible keys / the data volume)
-   demands it.
+   ([partitioning and sharding](../partitioning-sharding/README.md)) if the
+   *keyspace* (the theoretical set of possible keys) is exhausted or if *data
+   volume* and query load demand it.
 
 ## How it works
 
-This capstone turns the existing URL-shortener app into a design exercise. Use
-the running app only as a reference implementation: the deliverable is a design
+The existing URL-shortener app is a reference implementation for this design
+exercise. Use the running app only for comparison: the deliverable is a design
 document that explains requirements, estimates, APIs, data model, read/write
 paths, cache strategy, analytics flow, and failure behavior.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Leader election & replica sets. Kill the primary and watch
-# the survivors elect a new one with no operator action (contrast replication and failover). Pausable.
+# the survivors elect a new one with no operator action.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
@@ -16,7 +16,7 @@ MSH_LOCAL="$COMPOSE exec -T mongo2 mongosh --quiet"
 echo "${BOLD}Leader election & replica sets${RESET}"
 note "Assumes 'make leader-election-replica-sets' is running (MongoDB lab: mongo1/2/3 + mongo-init)."
 
-primary() { eval "$MSH_LOCAL --eval 'rs.isMaster().primary'" 2>/dev/null | tr -d '[:space:]'; }
+primary() { eval "$MSH_LOCAL --eval 'db.hello().primary'" 2>/dev/null | tr -d '[:space:]'; }
 
 step "Show the current topology" "one PRIMARY, two SECONDARY"
 run "$MSH_LOCAL --eval 'rs.status().members.forEach(m => print(m.name, m.stateStr))'"
@@ -47,7 +47,7 @@ step "Quorum check: kill a second node" "lone survivor steps DOWN — no majorit
 run "$COMPOSE kill mongo3 || true"
 note "waiting for the step-down (a primary that loses majority demotes itself within ~electionTimeout) ..."
 sleep 14
-run "$MSH_LOCAL --eval 'rs.isMaster().ismaster' || true"
+run "$MSH_LOCAL --eval 'db.hello().ismaster' || true"
 note "With only 1 of 3 reachable there is no majority, so it refuses to be primary."
 pause
 

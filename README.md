@@ -1,12 +1,11 @@
 # Systems Design Lab
 
-A runnable systems-design guide for learning how real backend components fit together. The repo combines short concept modules, Docker Compose profiles, and guided demos so each idea can be observed locally instead of only described in a diagram.
+A systems-design guide with practical examples for learning how real-world system components fit together. The guide repo combines short lessons with runnable examples and guided demos to demonstrate how systems work in the real world.
 
 ## Quick navigation
 
 - [Quick start](#quick-start)
-- [First study session](#first-study-session)
-- [What you can explore](#what-you-can-explore)
+- [Table of contents](#table-of-contents)
 - [How the guide works](#how-the-guide-works)
 - [System requirements](#system-requirements)
 - [Common commands](#common-commands)
@@ -14,14 +13,14 @@ A runnable systems-design guide for learning how real backend components fit tog
 - [Architecture overview](#architecture-overview)
 - [Application contract](#application-contract)
 - [Repository structure](#repository-structure)
-- [Validation](#validation)
+- [Validate your changes](#validate-your-changes)
 - [Safety and security](#safety-and-security)
 
 ## What is Systems Design Lab?
 
-Systems Design Lab is a local practice environment for core systems-design ideas: APIs, gateways, DNS, load balancing, scaling, databases, caching, queues, event streaming, replication, sharding, observability, object storage, vector retrieval, and capstone designs.
+Systems Design Lab is a local practice environment for core systems-design ideas: DNS, load balancing, gateways, scaling, databases, caching, queues, event streaming, replication, sharding, observability, object storage, vector search, and related topics.
 
-The lessons are concept-first and implementation-second. Each module explains the general idea, maps it to local containers, gives commands to run, describes how to read the output, and names the trade-offs.
+Each lesson starts by introducing the concept then proceeds to practical implementation / demo. All components have been configured to run locally via docker.
 
 ## Quick start
 
@@ -53,40 +52,50 @@ Use `AUTO=1` to run many demos without pauses:
 AUTO=1 ./modules/caching/demo.sh
 ```
 
-## First study session
+## Table of contents
 
-A good first pass is:
-
-1. [Trade-offs and vocabulary](modules/tradeoffs/README.md)
-2. [The design method](modules/design-method/README.md)
-3. [Estimation](modules/estimation/README.md)
-4. [API gateway](modules/api-gateway/README.md)
-5. [Databases](modules/databases/README.md)
-6. [Caching](modules/caching/README.md)
-7. [Async queues](modules/async-queues/README.md)
-8. [Observability](modules/observability/README.md)
-9. [Design TinyURL](modules/tinyurl/README.md)
-
-That path moves from vocabulary to a complete design artifact while keeping every step tied to a runnable local system.
-
-## What you can explore
-
-| Area | Modules |
-|---|---|
-| Foundations | trade-offs, design method, estimation, availability, when not to scale |
-| Request path | DNS, load balancing, API gateway, scaling, service discovery |
-| Interfaces and protection | API design, rate limiting, circuit breakers |
-| Data systems | databases, database scaling, replication and failover, leader election, partitioning and sharding, consistency models |
-| Performance and delivery | caching, edge caching, scaling, async queues, event streaming, message delivery semantics, sagas |
-| Operations | observability, multi-region disaster recovery |
-| Specialized storage and retrieval | object storage, vector store |
-| Capstones | TinyURL, news feed, chat, distributed rate limiter |
+| Order | Area | Lesson |
+|---:|---|---|
+| 1 | Foundations | [Introduction to systems design](modules/introduction/README.md) |
+| 2 | Foundations | [The design method](modules/design-method/README.md) |
+| 3 | Foundations | [Estimation](modules/estimation/README.md) |
+| 4 | Foundations | [Choosing the right building block](modules/component-selection/README.md) |
+| 5 | Foundations | [Consistency models](modules/consistency-models/README.md) |
+| 6 | Foundations | [Availability and reliability math](modules/availability/README.md) |
+| 7 | Foundations | [When not to scale](modules/when-not-to-scale/README.md) |
+| 8 | Interfaces and edge | [API design](modules/api-design/README.md) |
+| 9 | Interfaces and edge | [DNS and name resolution](modules/dns/README.md) |
+| 10 | Interfaces and edge | [API gateway](modules/api-gateway/README.md) |
+| 11 | Interfaces and edge | [Load balancing](modules/load-balancing/README.md) |
+| 12 | Interfaces and edge | [Scaling: vertical vs horizontal](modules/scaling/README.md) |
+| 13 | Interfaces and edge | [Service discovery](modules/service-discovery/README.md) |
+| 14 | Protection | [Rate limiting and backpressure](modules/rate-limiting/README.md) |
+| 15 | Protection | [Circuit breakers, timeouts, and retries](modules/circuit-breakers/README.md) |
+| 16 | Data layer | [Databases](modules/databases/README.md) |
+| 17 | Data layer | [Database scaling](modules/database-scaling/README.md) |
+| 18 | Data layer | [Replication and failover](modules/replication-failover/README.md) |
+| 19 | Data layer | [Leader election and replica sets](modules/leader-election-replica-sets/README.md) |
+| 20 | Data layer | [Partitioning and sharding](modules/partitioning-sharding/README.md) |
+| 21 | Performance and delivery | [Caching](modules/caching/README.md) |
+| 22 | Performance and delivery | [Object storage](modules/object-storage/README.md) |
+| 23 | Performance and delivery | [Edge caching and CDN model](modules/edge-caching/README.md) |
+| 24 | Async and workflows | [Async queues](modules/async-queues/README.md) |
+| 25 | Async and workflows | [Event streaming and replayable logs](modules/event-streaming/README.md) |
+| 26 | Async and workflows | [Message delivery semantics, outbox, and idempotency](modules/message-delivery-semantics/README.md) |
+| 27 | Async and workflows | [Distributed transactions and sagas](modules/sagas/README.md) |
+| 28 | Operations | [Observability](modules/observability/README.md) |
+| 29 | Operations | [Multi-region disaster recovery and backups](modules/multi-region-dr/README.md) |
+| 30 | Specialized retrieval | [Vector stores and similarity retrieval](modules/vector-store/README.md) |
+| 31 | Capstone | [Design TinyURL](modules/tinyurl/README.md) |
+| 32 | Capstone | [Design a news feed](modules/news-feed/README.md) |
+| 33 | Capstone | [Design a chat system](modules/chat/README.md) |
+| 34 | Capstone | [Design a distributed rate limiter](modules/distributed-rate-limiter/README.md) |
 
 ## How the guide works
 
 Each module is a small lab:
 
-- **Outcome** states what the module should make you able to explain.
+- **Outcome** states what the module should make you understand.
 - **What you will build or run** previews the concrete activity.
 - **Concept** defines the idea without tying it to one vendor.
 - **How it works** maps the idea to this repo.
@@ -166,11 +175,14 @@ The URL-shortener app provides a small shared contract used across modules:
 |---|---|
 | `GET /api/health` | app health and instance identity |
 | `GET /api/metrics` | Prometheus metrics |
-| `POST /api/shorten` | create a short link |
-| `GET /:code` | resolve a short code and redirect |
+| `POST /api/shorten` | create or return a short link for `{ "longUrl": "https://..." }` |
+| `GET /api/links/:code` | resolve a short code and return a `302` redirect |
 | `POST /api/jobs` | enqueue background work when the async queue profile is active |
 
-The gateway exposes API routes under `/api/...` and redirects short-code lookups through the same public entry point.
+`POST /api/shorten` returns `201` when a mapping is new and `200` when the same
+long URL already exists. The response includes both `code` and `shortUrl`.
+The gateway exposes API routes under `/api/...` and also keeps root-level
+short-code redirects (`GET /:code`) for compatibility with earlier modules.
 
 ## Repository structure
 
@@ -183,7 +195,12 @@ docker-compose.yml     base stack plus module profiles
 Makefile               entry points for running and validating labs
 ```
 
-## Validation
+## Validate your changes
+
+Validation keeps this guide trustworthy. The lessons are not only text; many of
+them depend on Docker profiles, shell scripts, local links, and demo output. Run
+focused checks while editing so small mistakes are caught early, then run the
+full validator before larger releases or structural changes.
 
 Use focused validation while editing:
 

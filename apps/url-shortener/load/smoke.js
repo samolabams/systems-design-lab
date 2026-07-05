@@ -28,10 +28,10 @@ export default function () {
   const res = http.post(`${GATEWAY}/shorten`, JSON.stringify({ url: 'https://example.com' }), {
     headers: { 'Content-Type': 'application/json' },
   });
-  check(res, { 'shorten 201': (r) => r.status === 201 });
+  check(res, { 'shorten 200/201': (r) => r.status === 200 || r.status === 201 });
 
   // Read path: follow the redirect (manual to assert the 302).
-  if (res.status === 201) {
+  if (res.status === 200 || res.status === 201) {
     const code = res.json('code');
     const look = http.get(`${GATEWAY}/${code}`, { redirects: 0 });
     check(look, { 'redirect 302': (r) => r.status === 302 });

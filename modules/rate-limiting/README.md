@@ -3,8 +3,6 @@
 **Track:** Components
 **Prerequisites:** none
 
-> **Status:** Runnable - demonstrates limiter algorithms and `429` behavior with the local stack.
-
 ## Outcome
 
 After this module, you should understand rate limiting as a general
@@ -30,25 +28,25 @@ to explain:
 
 A single misbehaving client — a retry storm, a scraper, a runaway script, or an
 attacker — can consume all available capacity and take the service down for everyone.
-Rate limiting caps how fast any one caller may consume resources, turning a
-cliff-edge outage into a polite **429 Too Many Requests** for the noisy few while
-everyone else stays healthy. It is the cheapest form of load shedding.
+Rate limiting caps how fast any one caller may consume resources, returning
+**429 Too Many Requests** for traffic over the configured quota while preserving
+capacity for admitted requests. It is the cheapest form of load shedding.
 
 ## Concept
 
-- **Leaky / token bucket** — two closely-related algorithms pictured as a bucket.
-  *Token bucket*: tokens drip in at a fixed rate up to a cap; each request spends
-  one token, and requests with no token left are rejected — the cap is the size
-  of **burst** the system will tolerate, the drip rate is the steady **rate**. *Leaky
-  bucket*: requests pour in and drain out at a fixed rate; if the bucket overflows
-  the excess is dropped. Both admit a steady average rate plus a small burst.
-  Nginx's `limit_req` is a leaky bucket.
-- **Fixed / sliding window** — count requests per key (IP, API key, user) within a
-  time window and reject once the count exceeds the quota. A *fixed window*
-  resets the counter at fixed clock boundaries (simple, but allows a double-rate
-  burst straddling a boundary); a *sliding window* measures the trailing N
-  seconds continuously (smoother, but tracks more state). The classic
-  implementation is a counter with a TTL (auto-expiring count).
+- **Token bucket** — tokens accumulate at a fixed refill rate up to a maximum
+  capacity. Each request spends one token. The capacity controls the allowed
+  burst; the refill rate controls the long-term average rate.
+- **Leaky bucket** — requests enter a queue or counter and leave at a fixed drain
+  rate. Excess requests are delayed or dropped when the bucket is full. This
+  smooths traffic into a steadier output rate. Nginx's `limit_req` uses this
+  style of algorithm.
+- **Fixed window** — count requests per key (IP, API key, user) within a fixed
+  clock interval and reject once the count exceeds the quota. It is simple, but
+  a client can burst across a boundary between two windows.
+- **Sliding window** — count requests over the trailing N seconds instead of a
+  fixed clock interval. It gives smoother enforcement, but it tracks more state.
+  A common implementation is an expiring counter or timestamp set.
 - **Where to limit** —
   - **At the edge / gateway:** low-cost, coarse, per-IP. Sheds floods *before* they
     reach the app or database. First line of defence.
@@ -58,14 +56,15 @@ everyone else stays healthy. It is the cheapest form of load shedding.
   replica admit the full quota, so the real limit becomes **N × quota**. A
   **shared counter in Redis** keeps the quota global.
 
-Think of the two limiter locations as layered protection, not rivals:
+Edge and application limiters provide complementary, layered protection:
 
 ```text
 client -> edge limiter -> app/user limiter -> service logic -> dependencies
 ```
 
-Use the edge for cheap, coarse protection such as per-IP floods. Use the app for
-precise policies such as per-user, per-tenant, per-plan, or per-endpoint quotas.
+Edge limiting provides cheap, coarse protection such as per-IP flood control.
+Application-level limiting provides precise policies such as per-user,
+per-tenant, per-plan, or per-endpoint quotas.
 Many production systems use both: the edge rejects obvious excess before it costs
 application work, and the app enforces the business rule the edge cannot know.
 

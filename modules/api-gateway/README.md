@@ -3,12 +3,10 @@
 **Track:** Components
 **Prerequisites:** none
 
-> **Status:** Runnable - inspects routing, headers, and edge behavior through the base gateway.
-
 ## Outcome
 
-After this module, you should understand an API gateway as a front-door
-mechanism rather than an abstract diagram label. You should be able to explain:
+After this module, you should understand an API gateway as the public entry
+point for API traffic rather than an abstract diagram label. You should be able to explain:
 
 1. What an API gateway does: it receives external requests and forwards them to internal services.
 2. Why systems use a gateway: it gives clients one stable entry point while hiding internal service layout.
@@ -27,7 +25,7 @@ mechanism rather than an abstract diagram label. You should be able to explain:
 
 ## Why this matters
 
-**An API gateway is the front door for client traffic.** In many systems, clients do not call every internal service directly. They call one public endpoint, and that endpoint decides where the request should go inside the system.
+**An API gateway is a public entry point for client traffic.** In many systems, clients do not call every internal service directly. They call one stable endpoint, and that endpoint decides where the request should go inside the system.
 
 Without a gateway, every client would need to know internal service addresses, ports, protocols, and deployment changes. That creates tight coupling: changing an internal service can force changes in clients. With a gateway, clients talk to one stable address while the system keeps its internal layout private.
 
@@ -59,7 +57,7 @@ The client sees the gateway. The internal service sees a request forwarded by th
 The main vocabulary:
 
 - **Client** - the caller, such as a browser, mobile app, script, or another service.
-- **API gateway** - the front-door component that receives external API traffic and applies routing or policy before forwarding it.
+- **API gateway** - the public entry-point component that receives external API traffic and applies routing or policy before forwarding it.
 - **Reverse proxy** - a proxy that sits in front of servers and forwards client requests to them. An API gateway is often a reverse proxy with API-specific responsibilities.
 - **Load balancer** - a component that chooses which replica should receive traffic. A gateway may include load balancing, but load balancing is only one gateway responsibility.
 - **Backend service** - the internal service that actually handles the request.
@@ -75,7 +73,7 @@ Load balancing and API gateway behavior often live in the same tool, but they an
 | Load balancer | Which healthy backend replica should handle this request? |
 | API gateway | What should happen to this API request before it reaches an internal service? |
 
-load balancing focuses on distribution across replicas. This module focuses on front-door behavior: one public entry point, request forwarding, route ownership, headers, and gateway policy.
+load balancing focuses on distribution across replicas. This module focuses on gateway behavior: one public entry point, request forwarding, route ownership, headers, and gateway policy.
 
 ## What should live at the gateway
 
@@ -122,7 +120,7 @@ The important files are:
 | [apps/url-shortener/src/routes/index.js](../../apps/url-shortener/src/routes/index.js) | App route table | `/health`, `/metrics`, `/shorten`, `/jobs`, and `/:code` |
 | [apps/url-shortener/src/controllers/linkController.js](../../apps/url-shortener/src/controllers/linkController.js) | App request handlers | `POST /shorten` and redirect behavior |
 | [modules/load-balancing/README.md](../load-balancing/README.md) | Load balancing lesson | How gateway traffic is distributed across replicas |
-| [modules/rate-limiting/README.md](../rate-limiting/README.md) | Rate limiting lesson | A gateway policy built on top of this front door |
+| [modules/rate-limiting/README.md](../rate-limiting/README.md) | Rate limiting lesson | A gateway policy built on top of this entry point |
 
 The key Nginx pattern is:
 
@@ -233,16 +231,16 @@ This output proves the gateway forwarded the request because /api/health returne
 
 ## What to observe
 
-1. **Gateway health** - `/gateway-health` is answered by Nginx itself. It proves the front door is alive.
+1. **Gateway health** - `/gateway-health` is answered by Nginx itself. It proves the gateway process is alive.
 2. **Route mapping** - `/api/health` goes through the gateway and is answered by the app's internal `/health` route.
 3. **Network boundary** - `localhost:3000` is not exposed on the host, so external callers must use the gateway.
 4. **Route behavior** - `POST /api/shorten` creates a code, and `GET /api/links/:code` returns a redirect.
-5. **Config ownership** - Nginx owns the front-door forwarding rule with `location` and `proxy_pass`.
+5. **Config ownership** - Nginx owns the public forwarding rule with `location` and `proxy_pass`.
 6. **Header forwarding** - the gateway preserves client context with headers such as `Host`, `X-Real-IP`, and `X-Forwarded-For`.
 
 ## What you learned
 
-- An API gateway is the system front door, not the business application.
+- An API gateway is the system's public entry point, not the business application.
 - Gateway routes hide internal service layout from clients.
 - Headers, logs, timeouts, and policy are edge concerns that affect every downstream service.
 - Load balancing can live near the gateway, but it answers a narrower question.

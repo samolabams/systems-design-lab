@@ -10,7 +10,7 @@ component. This map explains where each kind of infrastructure fits in the lab.
 
 | Folder | Role (what it does) | Used in |
 |---|---|---|
-| [gateway/](gateway/) | The front door — load balancing and routing | load balancing, scaling |
+| [gateway/](gateway/) | Public entry point, load balancing, and routing | load balancing, scaling |
 | [database/](database/) | Durable state — Postgres (primary/replica) + PgBouncer pooling | replication and failover |
 | [cache/](cache/) | Fast in-memory store — Redis | caching, rate limiting, partitioning and sharding |
 | [queue/](queue/) | Async messaging — RabbitMQ | async queues (Kafka in event streaming) |

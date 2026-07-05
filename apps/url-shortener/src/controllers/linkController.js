@@ -13,14 +13,19 @@ const { log } = require('../logger');
 
 // POST /shorten — write path; always the primary.
 exports.shorten = async (req, res) => {
-  const url = req.body && req.body.url;
+  const url = req.body && (req.body.longUrl || req.body.url);
   if (!url || typeof url !== 'string') {
-    return res.status(400).json({ error: 'body must be { "url": "..." }' });
+    return res.status(400).json({ error: 'body must be { "longUrl": "https://..." }' });
   }
   try {
-    const link = await linkService.shorten(url);
-    return res.status(201).json({ code: link.code });
+    const { link, created } = await linkService.shorten(url);
+    const protocol = req.get('x-forwarded-proto') || req.protocol;
+    const shortUrl = `${protocol}://${req.get('host')}/${link.code}`;
+    return res.status(created ? 201 : 200).json({ code: link.code, shortUrl });
   } catch (err) {
+    if (err.code === 'INVALID_URL') {
+      return res.status(400).json({ error: 'longUrl must be an http or https URL' });
+    }
     if (err.code === 'ALLOC_FAILED') {
       return res.status(500).json({ error: 'could not allocate code' });
     }

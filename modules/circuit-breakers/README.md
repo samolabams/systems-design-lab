@@ -3,8 +3,6 @@
 **Track:** Components
 **Prerequisites:** none
 
-> **Status:** Demonstration - runs a temporary Node simulation of circuit-breaker state transitions.
-
 ## Outcome
 
 After this module, you should understand a circuit breaker as a
@@ -82,7 +80,7 @@ pseudocode above, with `threshold=3`, `cooldown=1.5s`, `call_timeout=200ms`. It
 simulates a dependency that is healthy, fails for a roughly 3-second window, then
 recovers, and pushes 20 calls through the breaker. Read the output first, then
 inspect `breaker.js` if you want to see how the pseudocode becomes executable
-code. `demo.sh` runs it in a temporary `node:22-alpine` container and prints
+code. `demo.sh` runs it in a temporary hardened Node container and prints
 every state transition and each call's outcome.
 
 > The **pseudocode above is the reference algorithm**. `breaker.js` is one

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# €” Distributed transactions & sagas. There is no cross-service
+# Distributed transactions & sagas. There is no cross-service
 # BEGINâ€¦COMMIT, so a multi-service write (reserve inventory -> charge payment ->
 # create shipment) is run as a SAGA: a chain of LOCAL transactions, each in its
 # own table ("service"). If a later step fails, the orchestrator runs
 # COMPENSATING actions to semantically undo the earlier steps. We then show an
 # idempotent retry (a redelivered step does not double-apply). Pure Postgres
-# (base, always-on) â€” the saga logic is the lesson, not the transport. Pausable.
+# (base, always-on) â€” the saga logic is the lesson, not the transport.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
@@ -57,19 +57,28 @@ create_shipment() {  # order_id region
 
 # --- Compensations: semantic undo, run in REVERSE order of completed steps. ---
 comp_shipment() { # order_id
-  $PSQL -q -c "UPDATE saga_shipments SET state='cancelled' WHERE order_id='$1' AND state='created'" </dev/null
-  $PSQL -q -c "INSERT INTO saga_log(order_id,step,status) VALUES ('$1','ship','compensated')" </dev/null
-  echo "    comp ship($1): shipment cancelled"
+  local oid="$1" claimed
+  claimed=$(count "WITH ins AS (INSERT INTO saga_processed(step_key) VALUES ('comp_ship:$oid') ON CONFLICT DO NOTHING RETURNING 1) SELECT count(*) FROM ins")
+  if [ "$claimed" != "1" ]; then echo "    comp ship($oid): already applied â€” skip (idempotent)"; return; fi
+  $PSQL -q -c "UPDATE saga_shipments SET state='cancelled' WHERE order_id='$oid' AND state='created'" </dev/null
+  $PSQL -q -c "INSERT INTO saga_log(order_id,step,status) VALUES ('$oid','ship','compensated')" </dev/null
+  echo "    comp ship($oid): shipment cancelled"
 }
 comp_payment() { # order_id
-  $PSQL -q -c "UPDATE saga_payments SET state='refunded' WHERE order_id='$1' AND state='authorized'" </dev/null
-  $PSQL -q -c "INSERT INTO saga_log(order_id,step,status) VALUES ('$1','charge','compensated')" </dev/null
-  echo "    comp charge($1): payment refunded"
+  local oid="$1" claimed
+  claimed=$(count "WITH ins AS (INSERT INTO saga_processed(step_key) VALUES ('comp_charge:$oid') ON CONFLICT DO NOTHING RETURNING 1) SELECT count(*) FROM ins")
+  if [ "$claimed" != "1" ]; then echo "    comp charge($oid): already applied â€” skip (idempotent)"; return; fi
+  $PSQL -q -c "UPDATE saga_payments SET state='refunded' WHERE order_id='$oid' AND state='authorized'" </dev/null
+  $PSQL -q -c "INSERT INTO saga_log(order_id,step,status) VALUES ('$oid','charge','compensated')" </dev/null
+  echo "    comp charge($oid): payment refunded"
 }
 comp_inventory() { # order_id sku qty
-  $PSQL -q -c "UPDATE saga_inventory SET available = available + $3 WHERE sku='$2'" </dev/null
-  $PSQL -q -c "INSERT INTO saga_log(order_id,step,status) VALUES ('$1','reserve','compensated')" </dev/null
-  echo "    comp reserve($1): +$3 $2 returned to stock"
+  local oid="$1" sku="$2" qty="$3" claimed
+  claimed=$(count "WITH ins AS (INSERT INTO saga_processed(step_key) VALUES ('comp_reserve:$oid') ON CONFLICT DO NOTHING RETURNING 1) SELECT count(*) FROM ins")
+  if [ "$claimed" != "1" ]; then echo "    comp reserve($oid): already applied â€” skip (idempotent)"; return; fi
+  $PSQL -q -c "UPDATE saga_inventory SET available = available + $qty WHERE sku='$sku'" </dev/null
+  $PSQL -q -c "INSERT INTO saga_log(order_id,step,status) VALUES ('$oid','reserve','compensated')" </dev/null
+  echo "    comp reserve($oid): +$qty $sku returned to stock"
 }
 
 # Run the saga for one order. The orchestrator advances step by step and, on the
@@ -92,7 +101,7 @@ run_saga() { # order_id sku qty amount region
   return 0
 }
 
-echo "${BOLD}€” Distributed transactions & sagas${RESET}"
+echo "${BOLD}Distributed transactions & sagas${RESET}"
 note "Assumes 'make sagas' is running (base Postgres; the saga logic is the point)."
 
 step "Set up the per-service tables" "inventory, payments, shipments, saga_log, processed (idempotency)"

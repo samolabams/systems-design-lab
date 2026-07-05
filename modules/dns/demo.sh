@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DNS & name resolution. Pausable, step-by-step.
+# DNS and name resolution demonstration.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
@@ -43,15 +43,15 @@ pause
 
 step "Walk the common record TYPES — each answers a different question" ""
 predict "Before each query, say what question the record type is supposed to answer." \
-     "A/AAAA locate hosts, CNAME aliases names, API gateway routes mail, TXT stores metadata, SRV locates services, NS/SOA describe authority."
+     "A/AAAA locate hosts, CNAME aliases names, MX routes mail, TXT stores metadata, SRV locates services, NS/SOA describe authority."
 note "AAAA — the IPv6 address:"
 run "$DIG +noall +answer @dns-auth www.shop.internal AAAA"
 note "CNAME — an alias; note the resolver also chases it to www's A records:"
 run "$DIG +noall +answer @dns-auth api.shop.internal"
 checkpoint "Why does the CNAME answer include www's A records too?" \
         "The alias points at www.shop.internal, and the server includes the target records needed to finish the lookup."
-note "API gateway — where mail for the domain goes (with priority):"
-run "$DIG +noall +answer @dns-auth shop.internal API gateway"
+note "MX — where mail for the domain goes (with priority):"
+run "$DIG +noall +answer @dns-auth shop.internal MX"
 note "TXT — arbitrary text (SPF / verification):"
 run "$DIG +noall +answer @dns-auth shop.internal TXT"
 note "SRV — locate a service: priority weight port target:"

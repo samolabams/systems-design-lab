@@ -3,8 +3,6 @@
 **Track:** Components
 **Prerequisites:** [Async queues](../async-queues/README.md)
 
-> **Status:** Runnable - starts Kafka and demonstrates partitions, offsets, consumer groups, and replay.
-
 ## Outcome
 
 After this module, you should understand event streaming as a replayable log
@@ -43,7 +41,8 @@ bug or build a new derived view later.
 The concept is independent of any one broker. The lab uses Kafka as one concrete
 implementation so topics, partitions, offsets, consumer groups, retention, and
 replay are visible. The core idea is the append-only, partitioned, replayable
-event log.
+event log. **Lag** is the distance between a consumer group's committed position
+and the head of the log, measured in record offsets or elapsed time.
 
 ## Concept
 
@@ -70,7 +69,8 @@ Common event streaming terms:
 - **Retention** - how long records remain in the log, independent of whether they
   were consumed.
 - **Replay** - reading old records again from an earlier offset.
-- **Lag** - how far a consumer group is behind the newest records.
+- **Lag** - the distance between a consumer group's committed offset and the
+   latest produced record, measured in offsets or elapsed time.
 
 Partitions provide parallelism, but they also define the ordering boundary:
 

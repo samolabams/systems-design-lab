@@ -45,7 +45,10 @@ Plus two conventions:
   The container runtime collects stdout; do not write log files.
 
 The reference app extends this same contract with `/shorten`, `/:code`, and
-`/jobs` — see the root [README](../README.md#application-contract).
+`/jobs` internally. Through the gateway, `POST /api/shorten` accepts
+`{ "longUrl": "https://..." }`, returns `{ "code", "shortUrl" }`, and is
+idempotent for repeated long URLs. `GET /api/links/:code` returns a `302`
+redirect. See the root [README](../README.md#application-contract).
 
 ## How the reference app is laid out
 

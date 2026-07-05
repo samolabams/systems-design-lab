@@ -2,9 +2,6 @@
 
 **Track:** Capstones
 
-> **Status:** Design exercise - there is no predefined demo; produce a design
-> using the design method and the components linked below.
-
 ## Before you start
 
 Complete or skim these modules first: [The design method](../design-method/README.md),
@@ -28,11 +25,11 @@ accuracy, latency, storage, failure behavior, and abuse resistance.
 
 ## Why this matters
 
-[rate limiting](../rate-limiting/README.md) limited requests at a single gateway. Real
-systems run **many** gateways/instances, so a limit of "100 req/min per user" must
-be enforced **globally** across all of them. This capstone generalises rate limiting into a
-standalone, sharded, Redis-backed limiter with shared counters — a service other
-teams can call.
+[Rate limiting](../rate-limiting/README.md) limited requests at a single gateway.
+Real systems run many gateways or app replicas, so a limit of "100 req/min per
+user" must be enforced globally across all of them. Distributed limiters need
+shared counters or coordinated state; otherwise each node can admit up to its
+local quota, multiplying the intended global limit.
 
 ## Concept
 
@@ -60,10 +57,10 @@ Apply the [design method](../design-method/README.md):
 
 ## How it works
 
-This capstone turns the single-gateway rate limiting lesson into a shared
-service design. The design document should define the limiting key, algorithm,
-shared state model, sharding strategy, client contract, and failure behavior
-before choosing implementation details.
+Enforcing limits across distributed nodes requires a design for shared state,
+consistency, sharding, and failure handling. The design document should define
+the limiting key, algorithm, shared state model, sharding strategy, client
+contract, and failure behavior before choosing implementation details.
 
 ## Task
 

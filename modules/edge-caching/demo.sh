@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# €” Edge / CDN caching. An Nginx edge cache sits in front of the
+# Edge / CDN caching. An Nginx edge cache sits in front of the
 # gateway and answers repeat requests itself, so the origin only sees the first
 # (a MISS). We prove it with /health, which names the replica that served it.
 set -uo pipefail
@@ -9,7 +9,7 @@ COMPOSE="docker compose --profile edge-caching"
 GATEWAY="${GATEWAY:-http://localhost:${GATEWAY_HTTP_PORT:-8080}}"
 EDGE="http://localhost:${EDGE_HTTP_PORT:-8082}"
 
-echo "${BOLD}€” Edge / CDN caching${RESET}"
+echo "${BOLD}Edge / CDN caching${RESET}"
 note "Assumes 'make edge-caching' is running (base + edge). Edge: $EDGE"
 
 step "Scale the origin to 3 replicas" "so /health can name which replica served it"
@@ -33,9 +33,8 @@ note "NOT being touched, even though 3 replicas exist and the gateway round-robi
 pause
 
 step "Let the 10s TTL expire, then ask again" "X-Cache-Status flips to EXPIRED/MISS and the edge revalidates"
-note "Waiting 11s for proxy_cache_valid (10s) to lapse ..."
-sleep 11
-run "curl -si $EDGE/health | tr -d '\r' | grep -Ei 'X-Cache-Status|\"host\"'"
+note "Waiting for the 10s TTL to expire ..."
+run "deadline=25; while [ \$deadline -gt 0 ]; do out=\$(curl -si $EDGE/health | tr -d '\r'); echo \"\$out\" | grep -Ei 'X-Cache-Status|\"host\"'; echo \"\$out\" | grep -Eq 'X-Cache-Status: (EXPIRED|MISS|BYPASS)' && break; deadline=\$((deadline-1)); sleep 1; done"
 note "A stale entry triggers one origin fetch; subsequent calls are HITs again."
 pause
 

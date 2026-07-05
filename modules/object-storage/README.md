@@ -4,8 +4,6 @@
 **Study role:** Specialized - include when designs require large blobs, uploads, downloads, or media delivery.
 **Prerequisites:** none
 
-> **Status:** Runnable - starts MinIO and demonstrates buckets, object keys, private access, and presigned URLs.
-
 ## Outcome
 
 After this module, you should understand object storage as a general component

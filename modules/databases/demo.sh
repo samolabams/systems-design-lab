@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Databases. Pausable, step-by-step.
+# Databases demonstration.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 

@@ -3,8 +3,6 @@
 **Track:** Components
 **Prerequisites:** none
 
-> **Status:** Runnable - starts RabbitMQ and a worker to demonstrate asynchronous processing.
-
 ## Outcome
 
 After this module, you should understand queues as a general mechanism for
@@ -108,17 +106,18 @@ The general roles are represented by local lab components:
 
 | General role | Lab implementation |
 |---|---|
-| producer | URL-shortener app endpoint `POST /jobs` |
+| producer | URL-shortener app endpoint `POST /jobs`, exposed by the gateway as `POST /api/jobs` |
 | broker | RabbitMQ |
 | queue | `jobs` queue |
 | consumers | scalable `worker` containers |
 | backpressure setting | worker prefetch of 1 |
 | observability | worker logs and RabbitMQ management UI |
 
-The `async-queues` profile starts RabbitMQ and one worker. The app exposes
-`POST /jobs`. When the endpoint receives a job request, it publishes a message to
-the `jobs` queue and returns `202` immediately. The request path does not do the
-slow work.
+The `async-queues` profile starts RabbitMQ and one worker. The app exposes an
+internal `POST /jobs` route, and the gateway exposes it publicly as
+`POST /api/jobs`. When the endpoint receives a job request, it publishes a
+message to the `jobs` queue and returns `202` immediately. The request path does
+not do the slow work.
 
 Workers consume from the queue with prefetch set to 1. That means each worker can
 hold at most one unacknowledged message at a time. If a burst of jobs arrives,
@@ -178,7 +177,7 @@ lab credentials `app` / `app`.
 Publishing a job has this shape:
 
 ```bash
-curl -s -X POST http://localhost:8080/jobs \
+curl -s -X POST http://localhost:8080/api/jobs \
   -H 'Content-Type: application/json' \
   -d '{"task":"resize","id":1}'
 ```
@@ -187,7 +186,7 @@ Read that as:
 
 | Part | Meaning |
 |---|---|
-| `POST /jobs` | ask the API to enqueue work |
+| `POST /api/jobs` | ask the gateway to route an enqueue request to the app |
 | JSON body | the job payload |
 | `202 Accepted` | the work was accepted for async processing |
 

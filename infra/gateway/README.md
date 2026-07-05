@@ -1,4 +1,4 @@
-# infra/gateway — the front door (load balancing & routing)
+# infra/gateway — entry point, load balancing, and routing
 
 The gateway is the first infrastructure component reached by each request. It
 decides which app replica serves the request and can terminate TLS, apply rate

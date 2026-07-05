@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Database scaling. Pausable, step-by-step.
+# Database scaling demonstration.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
 COMPOSE="${COMPOSE:-docker compose}"
 PSQL="$COMPOSE exec -T postgres-primary psql -U app -d app"
 
-echo "${BOLD}Module API gateway - Database scaling${RESET}"
+echo "${BOLD}Module - Database scaling${RESET}"
 note "Assumes 'make base' is running. This module explains which database scaling lever fits which pressure."
 
 step "Name the shared state" \

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# €” Rate limiting. Two layers: (1) a cheap leaky-bucket at the GATEWAY
+# Rate limiting. Two layers: (1) a cheap leaky-bucket at the gateway
 # (Nginx limit_req) that sheds floods before they reach the app, and (2) the
 # distributed counter primitive (Redis INCR+EXPIRE) that an APP-level limiter
-# uses so the limit holds ACROSS replicas. Pausable.
+# uses so the limit holds across replicas.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
@@ -23,7 +23,7 @@ restore_gateway() {
   rm -f "$NGINX_CONF.orig"
 }
 
-echo "${BOLD}€” Rate limiting${RESET}"
+echo "${BOLD}Rate limiting${RESET}"
 note "Assumes 'make rate-limiting' is running (base + redis). Gateway: $GATEWAY"
 
 step "Baseline: no limit, every request passes" "all 200s"

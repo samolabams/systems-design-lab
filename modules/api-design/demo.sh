@@ -5,7 +5,7 @@
 # existing `app` container (node-alpine): the real Protobuf wire size vs JSON,
 # and how GraphQL field-selection removes REST's over-fetch and round trips.
 # The qualitative trade-offs (streaming, caching, coupling) are called out as we
-# go. No new service, no compose change. Pausable.
+# go. No new service or compose change.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
@@ -37,8 +37,7 @@ pause
 
 step "Operational checklist" "the guardrails each API style needs in production"
 runjs operate
-note "Pick by problem shape: REST for ubiquity/caching, gRPC for fast service-to-"
-note "service + streaming, GraphQL for client-tailored reads over many resources."
+note "Pick by problem shape: REST for ubiquity/caching, gRPC for fast service-to-service + streaming, GraphQL for client-tailored reads over many resources."
 
 echo
 echo "${BOLD}Done.${RESET} Cleanup: ${GREEN}make reset${RESET}"

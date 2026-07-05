@@ -1,9 +1,7 @@
-# What is a system? Trade-offs & vocabulary
+# Introduction to systems design
 
 **Track:** Foundations
 **Prerequisites:** none
-
-> **Status:** Runnable - uses the base lab stack to connect vocabulary to measured behavior.
 
 ## Outcome
 
@@ -15,38 +13,48 @@ and trade-offs.
 
 ## What you will build or run
 
-1. A vocabulary map for latency, throughput, availability, consistency, and state.
-2. Small examples that show why improving one property can hurt another.
-3. A set of trade-off statements you can reuse in later modules.
+1. An understanding of latency, throughput, availability, consistency, and state.
+2. A small base-stack run that shows how replica count affects request latency.
+3. Short trade-off statements you can reuse in later modules.
 4. A foundation for explaining why a design choice is justified.
 
 ## Why this matters
 
-This is the first systems-design lesson, so it starts from the beginning: a
-system is a set of parts that work together to serve users under constraints.
-Those parts might be clients, gateways, services, databases, caches, queues,
-networks, and monitoring tools. Systems design is deciding how those parts fit
-together so the result is fast enough, reliable enough, correct enough, secure
-enough, and affordable enough for the problem in front of you.
+This is the first systems-design lesson, so it starts with the basics. A system
+is a set of components that work together to serve users under constraints.
+Those components might include clients, gateways, services, databases, caches,
+queues, networks, and monitoring tools. Systems design is the process of
+deciding how those parts fit together, how data moves between them, and how the
+system behaves when traffic grows, dependencies fail, or requirements change.
 
-Every systems-design decision is a trade-off. Most bad designs come from using a
-word loosely — calling something "scalable" when you mean "fast", or
-"available" when you mean "consistent". This module pins down the vocabulary so
-the rest of the guide has precise language to reason with. Get the words
-right and the design arguments get much shorter.
+A good design is not just a diagram. It explains the trade-offs behind the
+choices: what the system optimizes for, what it gives up, and why those choices
+fit the problem in front of it. Calling something "scalable" when you mean
+"fast", or "available" when you mean "consistent", leads to weak design
+arguments. This module pins down the vocabulary so the rest of the guide has
+precise language to reason with.
 
 ## Concept
 
 Before the trade-offs, name the basic shape:
 
-- **Client.** The caller: a browser, mobile app, another service, or a script.
-- **Server / service.** Code that accepts requests and returns responses.
-- **Gateway.** The front door that receives traffic and routes it inward.
-- **Database.** The durable source of truth for state that must survive restarts.
-- **Request path.** The chain a request follows: client -> gateway -> service ->
-  data store -> response.
-- **Bottleneck.** The slowest or most saturated part of that chain; scaling a
-  different part will not help much.
+- **Client.** A process or device that initiates a request for a service. A
+  client can be a browser, mobile app, command-line script, batch job, or another
+  service.
+- **Server / service.** A process that exposes a capability over a network or
+  local interface, accepts requests, performs work, and returns responses or
+  side effects.
+- **Gateway.** An entry point that receives client traffic and applies shared
+  concerns such as routing, TLS termination, authentication, rate limiting,
+  request shaping, or protocol translation before forwarding traffic inward.
+- **Database.** A system for storing, indexing, querying, and updating data with
+  durability guarantees, so important state can survive process or machine
+  restarts.
+- **Request path.** The ordered sequence of components involved in serving one
+  operation, such as client -> gateway -> service -> data store -> response.
+- **Bottleneck.** The resource or component that limits overall system
+  performance or capacity. Improving a non-bottleneck component usually has
+  little effect on end-to-end behavior.
 
 Then four distinctions do most of the work:
 

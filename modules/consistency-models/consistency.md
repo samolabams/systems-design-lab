@@ -14,8 +14,9 @@ is the difference between *naming* a model and *seeing* it.
 - **Cost:** a read on the replica may be stale.
 
 ## Read-your-writes
-- **Where:** replication and failover step "read-after-write hazard" — shorten then immediately read
-  from the replica; a non-zero lag yields a `404`.
+- **Where:** replication and failover step "read-after-write hazard" — write a
+  shortened URL and then immediately read from the replica; a non-zero lag yields
+  a `404`.
 - **Fix:** route the user's own reads to the primary for a short window, or pin
   the session to the node it wrote to.
 

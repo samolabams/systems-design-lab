@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# API Gateway / Edge Gateway. Pausable, step-by-step.
+# API Gateway / Edge Gateway demonstration.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
@@ -21,7 +21,7 @@ echo "${BOLD}Module API gateway - API Gateway / Edge Gateway${RESET}"
 note "Assumes 'make base' is running. Gateway: $GATEWAY"
 note "Learning loop: identify whether the gateway or the app answered each request."
 
-step "The gateway is the public front door" \
+step "The gateway is the public entry point" \
      "the gateway health endpoint is answered by Nginx itself"
 predict "What should /gateway-health prove?" \
         "It should prove the gateway process is reachable before the app is involved."
@@ -69,7 +69,7 @@ checkpoint "Why is /api/jobs different from /api/shorten in the base stack?" \
 pause
 
 step "The gateway config owns the forwarding rule" \
-     "shared proxy settings plus route-specific proxy_pass rules define the front-door behavior"
+     "shared proxy settings plus route-specific proxy_pass rules define public entry-point behavior"
 predict "Which Nginx directives should reveal the gateway route map?" \
         "Look for shared proxy headers, /api routes, and proxy_pass targets."
 run "grep -nE 'location|proxy_pass|proxy_set_header|listen|gateway-health|api/' $NGINX_CONF"

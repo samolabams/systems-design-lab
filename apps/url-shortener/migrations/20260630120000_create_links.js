@@ -18,6 +18,7 @@ exports.up = async function up(knex) {
     table.text('code').primary();
     table.text('url').notNullable();
     table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    table.index(['url'], 'links_url_idx');
   });
 };
 

@@ -4,8 +4,6 @@
 **Study role:** Specialized - use when designs need public/static content delivery, origin offload, or global latency reduction.
 **Prerequisites:** [Caching](../caching/README.md)
 
-> **Status:** Runnable - starts the edge cache and demonstrates cacheable HTTP delivery.
-
 ## Outcome
 
 After this module, you should understand edge caching as the network-edge
@@ -78,8 +76,11 @@ Common edge caching terms:
 - **Cache key** - the request identity used to decide whether two requests can
   share a cached response.
 - **Freshness lifetime / TTL** - how long a cached response is considered fresh.
-- **Revalidation** - asking the origin whether a stale cached response is still
-  valid, often with `ETag` or `Last-Modified` validators.
+- **Revalidation** - after a cached response becomes stale, the edge asks the
+  origin whether it can still reuse that response. HTTP caches commonly use
+  conditional requests with `If-None-Match`/`ETag` or
+  `If-Modified-Since`/`Last-Modified`; the origin can reply `304 Not Modified`
+  to reuse the cache entry or `200 OK` with a new response.
 - **Purge / invalidation** - explicitly removing a cached response before its TTL
   expires.
 - **Versioned asset** - a URL containing a content hash, such as
@@ -130,7 +131,7 @@ The demo scales the app to three replicas and uses `/health` as the visible
 origin response. `/health` includes the hostname of the app replica that served
 the request. When you hit the origin gateway directly, the hostname can rotate
 because the gateway load-balances across replicas. When you hit the edge after a
-cache fill, the hostname stays the same because the edge is replaying the cached
+cache fill, the hostname stays the same because the edge is returning the cached
 response instead of asking the origin again.
 
 When reading this module, keep these layers separate:

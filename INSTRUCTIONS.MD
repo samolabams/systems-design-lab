@@ -24,8 +24,8 @@ reuse the same base as a starting point for designing systems of their own.
   activate only those services via Docker Compose
   [profiles](https://docs.docker.com/compose/profiles/). No lesson should
   require booting the entire stack.
-2. **Every concept is reproducible.** Each module ships a `demo.sh`-style
-   pausable script that drives the scenario step by step (apply load, kill a
+2. **Every concept is reproducible.** Each module ships a guided `demo.sh` script
+  that drives the scenario step by step (apply load, kill a
    node, induce lag, partition the network) so the behavior is observable, not
    just described.
 3. **Observable by default.** Health endpoints expose which instance served a
@@ -187,11 +187,11 @@ systems-design/
 │   └── wait-for.sh           # health/readiness gate
 │
 └── modules/                  # one folder per lesson; profile name for runnable lessons
-  ├── tradeoffs/ … component-selection/
+  ├── introduction/ … component-selection/
   │   └── README.md         # Foundations (use base profile)
   ├── dns/ … vector-store/
   │   ├── README.md         # Components / Building blocks
-  │   └── demo.sh           # pausable step-by-step driver
+  │   └── demo.sh           # guided step-by-step driver
   └── tinyurl/ … distributed-rate-limiter/
     └── README.md         # Capstones: requirements + design writeup
 ```
@@ -249,7 +249,7 @@ workflow is fixed so a new service is never an architectural decision:
 
 Each module = a Compose profile (where it adds services) + a semantic
 `modules/<slug>/` folder with a `README.md` (concept + what to observe) and a
-pausable `demo.sh`.
+guided `demo.sh`.
 
 Legend: **Built** = exists in the source repo this spec derives from;
 **Designed** = steps defined but no runnable script; **New** = not yet scoped.
@@ -276,7 +276,7 @@ The guide has three tracks:
 Study first. These close the gap between "I can run a replica" and "I can
 reason about a design." None of these require new services unless noted.
 
-#### Trade-offs — What is a system? Trade-offs & vocabulary *(New)*
+#### Introduction — Introduction to systems design *(New)*
 - Beginner on-ramp: client, server/service, gateway, database, request path,
   bottleneck, and the idea that a system is parts arranged under constraints.
 - Performance vs scalability; latency vs throughput; vertical vs horizontal
@@ -352,7 +352,7 @@ reason about a design." None of these require new services unless noted.
 ### Components
 
 Each component is profile-gated and ships the standard README + `demo.sh`. They
-run in book order: name resolution and the front door first, then compute and
+run in book order: name resolution and the system entry point first, then compute and
 data, then caching, messaging, coordination, and finally the cross-cutting
 API / resilience / observability concerns.
 
@@ -567,7 +567,7 @@ the components" into "I can design a system."
 1. **load balancing (load balancing)** — full build: `SLOW` toggle, session counter, alternate
    `nginx.conf` variants, demo script.
 2. **`demo.sh` scripts** for replication and failover, leader election, event streaming (replication/failover, Mongo
-   election, Kafka replay/partitioning) using one consistent pausable format.
+  election, Kafka replay/partitioning) using one consistent guided-demo format.
 4. ~~**Grafana dashboards** for observability.~~ *(done — RED dashboard + exemplars)*
 5. **New modules caching, rate limiting, circuit breakers, partitioning and sharding, edge caching** — scaffold profiles, READMEs, and demo scripts
    (caching, rate limiting, circuit breakers, sharding, CDN).

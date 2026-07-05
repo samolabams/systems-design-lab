@@ -3,8 +3,6 @@
 **Track:** Foundations
 **Prerequisites:** [Replication and failover](../replication-failover/README.md), [Leader election and replica sets](../leader-election-replica-sets/README.md)
 
-> **Status:** Runnable - maps consistency models to the replication and election demos.
-
 ## Outcome
 
 After this module, you should be able to name common consistency
@@ -13,10 +11,10 @@ describe the trade-offs made during partitions and normal operation.
 
 ## What you will build or run
 
-1. A small consistency vocabulary model for reads, writes, replicas, and lag.
-2. Examples that distinguish strong consistency from eventual consistency.
+1. A consistency vocabulary map for reads, writes, replicas, lag, and quorum.
+2. Timeline examples that distinguish strong consistency from eventual consistency.
 3. A read-after-write scenario that explains why users may see stale data.
-4. A CAP/PACELC framing for availability, latency, and consistency trade-offs.
+4. A CAP/PACELC decision table for availability, latency, and consistency trade-offs.
 
 ## Why this matters
 
@@ -37,7 +35,7 @@ see*. The ones the lab demonstrates, strongest to weakest:
 | **Eventual** | copies (replicas) may lag but will agree *eventually* once updates propagate | Replication and failover **lag** on the replica |
 | **Read-your-writes** | after a client writes, that same client sees the write on its next read | replication and failover read-after-write **404** (when violated) |
 | **Monotonic reads** | reads never go backwards in time; a client does not see data disappear and then reappear | pin a session to one replica (load balancing `ip_hash`) |
-| **Causal** | if A caused B, everyone sees A before B | ordering via a log (event streaming — event streaming) |
+| **Causal** | if A caused B, everyone sees A before B | ordering via a log (event streaming, single partition) |
 
 Full notes: [consistency.md](consistency.md).
 
@@ -45,17 +43,18 @@ Full notes: [consistency.md](consistency.md).
 
 Two theorems frame the choice:
 
-- **CAP** — a *network partition* is what happens when nodes can no longer talk to
-  each other: a broken link splits the cluster into groups that cannot sync. While
-  that lasts, the system must choose. Pick **C**onsistency and the system refuses to serve
-  data that might be stale or conflicting; pick **A**vailability and the system keeps
-  serving, accepting that the two sides may drift apart. leader election's Mongo election
-  takes the first path (**CP**): the minority side stops accepting writes so the
-  two sides never diverge into conflicting histories that cannot be merged.
-- **PACELC** — extends CAP for the common case: *if Partition then C-or-A,*
-  ***E****lse* (normal operation) choose **L**atency or **C**onsistency. replication and failover's
-  async replica is an **EL** choice — it trades freshness for read latency and
-  scale.
+- **CAP describes partition-time behavior.** A *network partition* happens when
+  nodes can no longer talk to each other: a broken link splits the cluster into
+  groups that cannot sync. While that lasts, the system must choose. Pick
+  **C**onsistency and the system refuses to serve data that might be stale or
+  conflicting; pick **A**vailability and the system keeps serving, accepting that
+  the two sides may drift apart. leader election's Mongo election takes the first
+  path (**CP**): the minority side stops accepting writes so the two sides never
+  diverge into conflicting histories that cannot be merged.
+- **PACELC describes partition-time and normal-operation behavior.** It extends
+  CAP with the common case: *if Partition then C-or-A, Else choose Latency or
+  Consistency*. replication and failover's async replica is an **EL** choice: it
+  trades freshness for read latency and scale when the network is healthy.
 
 The lab makes the abstract concrete: the read-after-write 404 in replication and failover *is*
 eventual consistency; the rejected write in leader election *is* a CP partition choice.
@@ -114,7 +113,8 @@ a CP choice: preserve a single history even if some clients cannot write.
 
 - Strong consistency is simplest to reason about, but across replicas it requires
   coordination before a write or read can be considered current. Synchronous
-  acknowledgement adds latency, and during a partition the system may reject
+  replication can block a write until the required replicas acknowledge it, which
+  adds latency tied to replica round trips. During a partition, the system may reject
   some reads or writes rather than risk serving conflicting data; default to it
   until the numbers (estimation) force a weaker model for scale.
 - Eventual consistency scales reads cheaply but makes correctness the

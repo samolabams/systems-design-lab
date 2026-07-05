@@ -3,7 +3,7 @@
 # gives at-least-once delivery, so a retry double-acts unless the consumer is
 # idempotent. This demo proves effectively-once processing with the OUTBOX
 # pattern (Postgres) + consumer-side dedup, then REPLAYs the log to show
-# duplicates are absorbed. Pausable.
+# duplicates are absorbed.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 

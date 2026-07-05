@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Replication, lag, read-after-write, indexing, failover. Pausable.
+# Replication, lag, read-after-write, indexing, and failover.
 set -uo pipefail
 source "$(dirname "$0")/../../scripts/lib.sh"
 
@@ -39,7 +39,7 @@ run "$PRIMARY -c \"SELECT client_addr, state, pg_wal_lsn_diff(pg_current_wal_lsn
 pause
 
 step "Read-after-write hazard" "pause replay so the stale-read window is visible"
-note "Local replication is often too fast to catch by luck, so this step pauses WAL replay on the replica."
+note "Local replication typically completes before lag becomes observable, so this step pauses WAL replay on the replica."
 note "That creates the same kind of stale-read window a lagging replica can create under load or network delay."
 run "$REPLICA -c 'SELECT pg_wal_replay_pause();'"
 run "$PRIMARY -c \"INSERT INTO links(code,url) VALUES('fresh01','https://example.com/fresh') ON CONFLICT (code) DO UPDATE SET url = EXCLUDED.url;\""

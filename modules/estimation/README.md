@@ -3,8 +3,6 @@
 **Track:** Foundations
 **Prerequisites:** none
 
-> **Status:** Worksheet + measurement - combines back-of-the-envelope estimates with a local timing script.
-
 ## Outcome
 
 After this module, you should be able to turn rough product
@@ -22,9 +20,10 @@ numbers to decide whether a cache, queue, replica, or shard is actually needed.
 
 Estimation is how you decide whether you even *need* a cache, a shard, or a
 queue — *before* building it. A 60-second calculation often shows that a single
-well-tuned database comfortably handles the load, saving you from premature
-complexity (when not to scale). Conversely, it can reveal a real ceiling early, before it
-becomes a 3am incident. The skill is producing a defensible number fast.
+well-tuned database on commodity hardware benchmarked in 2026 comfortably
+handles the load, saving you from premature complexity (when not to scale).
+Conversely, it can reveal a real ceiling early, before it becomes a production
+incident. The skill is producing a defensible number fast.
 
 ## Concept
 

@@ -3,8 +3,6 @@
 **Track:** Foundations
 **Prerequisites:** [The design method](../design-method/README.md)
 
-> **Status:** Concept exercise - no infrastructure starts; use the catalog to justify component choices.
-
 ## Outcome
 
 After this module, you should be able to choose a building block
@@ -13,10 +11,10 @@ query pattern, latency budget, durability, fan-out, and operational cost.
 
 ## What you will build or run
 
-1. A requirements-first comparison of common infrastructure building blocks.
-2. A decision path that separates symptoms from mechanisms.
-3. Examples where adding a component helps and examples where it adds avoidable complexity.
-4. A reusable checklist for justifying a design choice.
+1. A requirements-first comparison table for common infrastructure building blocks.
+2. A symptom-to-mechanism decision path for choosing the right component.
+3. Worked examples where adding a component helps and where it adds avoidable complexity.
+4. A component-choice checklist you can reuse in capstone design documents.
 
 ## Why this matters
 
@@ -119,7 +117,7 @@ app reads the cache, and on a miss loads from the DB and fills the cache itself
 (consistent, but slower writes); *write-behind* — write to cache now and flush to
 the DB later (fast writes, but the not-yet-flushed data can be lost on a crash).
 
-### Front door
+### Request entry points
 
 | Option | Reach for it when | Trade-off | Demo |
 |---|---|---|---|

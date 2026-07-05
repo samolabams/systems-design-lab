@@ -17,7 +17,7 @@ pause
 
 step "Measure key movement: modulo vs consistent ring" "modulo reshuffles ~everything; the ring moves ~1/N"
 note "10,000 keys across 4 nodes, then we add a 5th and recount."
-run "docker run --rm -v \"$DEMO_DIR\":/demo:ro node:22-alpine node /demo/shard.js"
+run "docker run --rm -v \"$DEMO_DIR\":/demo:ro cgr.dev/chainguard/node:latest@sha256:5280e63c3d2c81366056926b79f27f70e4adbd3a03a5b45c53503eac2b722b3f /demo/shard.js"
 pause
 
 step "Why it matters" "moved keys = cache misses, data copies, rebalancing load"

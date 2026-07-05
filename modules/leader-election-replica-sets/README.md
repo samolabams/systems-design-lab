@@ -3,8 +3,6 @@
 **Track:** Components
 **Prerequisites:** [Databases](../databases/README.md), [Database scaling](../database-scaling/README.md)
 
-> **Status:** Runnable - starts a three-node MongoDB replica set and demonstrates automatic leader election, majority quorum, and step-down behavior.
-
 ## Outcome
 
 After this module, you should understand leader election as the mechanism a
@@ -144,7 +142,7 @@ The demo uses MongoDB shell commands and Docker failure injection:
 | Command shape | Meaning |
 |---|---|
 | `rs.status()` | show replica-set members and their current roles |
-| `rs.isMaster().primary` | ask which node is currently primary |
+| `db.hello().primary` | ask which node is currently primary |
 | `insertOne(..., { writeConcern: { w: "majority" } })` | write only after a majority acknowledges |
 | `docker compose kill mongo1` | remove the current leader from the group |
 | `docker compose kill mongo3` | remove another member and break majority |
