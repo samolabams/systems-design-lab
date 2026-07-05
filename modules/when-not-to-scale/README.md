@@ -19,43 +19,44 @@ justify it.
 
 ## Why this matters
 
-The rest of the guide covers scaling machinery — replicas, caches, shards,
+The rest of the guide covers scaling machinery - replicas, caches, shards,
 queues. This module is the deliberate counterweight: **most systems add that
 machinery far too early.** Premature sharding, caching everything, and
 queue-everything are anti-patterns that buy complexity, new failure modes, and
-operational cost without a measured need. A well-tuned single Postgres instance
+operational cost without a measured need. A well-tuned single relational database
 plus one read replica can serve substantial load (estimation). Require evidence before
 adding complexity.
 
 ## Concept
 
-Each scaling tool solves a *specific* **bottleneck** — the one resource that runs
-out first and caps the whole system — and carries a *specific* cost. Adding it
+Each scaling tool solves a *specific* **bottleneck** - the one resource that runs
+out first and caps the whole system - and carries a *specific* cost. Adding it
 speculatively means you pay the cost without removing a real ceiling:
 
-- **Sharding (partitioning and sharding)** removes a write/storage ceiling — but adds *rebalancing*
+- **Sharding (partitioning and sharding)** removes a write/storage ceiling - but adds *rebalancing*
   (moving data when you add/remove a shard), *cross-shard queries* (a query that
   must visit several shards and combine the results), and a routing layer.
 - **Caching (caching)** removes read latency on a *hot set* (the small slice of data
-  that gets most of the reads) — but becomes a *second source of truth* you must
+  that gets most of the reads) - but becomes a *second source of truth* you must
   **invalidate** (drop or refresh stale entries) correctly.
-- **Queues (async queues)** decouple async work — but add a broker, *delivery semantics*
+- **Queues (async queues)** decouple async work - but add a broker, *delivery semantics*
   (the rules for whether a message can be lost or duplicated), and
   end-to-end observability gaps.
-- **Microservices** match team/scale boundaries — but add network latency,
+- **Microservices** match team/scale boundaries - but add network latency,
   *partial failure* (one service is down while others are up), and
   distributed-ops cost.
 
 ## How it works
 
 The base system is already enough to serve meaningful load: one gateway, N
-**stateless** app replicas, and one Postgres reached through **PgBouncer**.
+**stateless** app replicas, and one shared database behind the app tier.
 "Stateless" means the replicas hold no per-client data, so any one of them can
-handle any request; PgBouncer is a connection pooler that lets all those app
-processes share a small pool of database connections. This demo sends real
+handle any request. This demo sends real
 traffic with **no cache, no shard, no queue** and observes whether p95 remains
-healthy. The lesson is that the *first* scaling move is usually "add a replica,
-tune the query, or use a larger server," not "introduce a distributed subsystem."
+healthy. p95 means the 95th percentile latency: 95% of requests completed at or
+below that time. The lesson is that the *first* scaling move is usually "add a
+replica, tune the query, or use a larger server," not "introduce a distributed
+subsystem."
 
 Use this decision checklist before adding infrastructure:
 
@@ -75,6 +76,7 @@ decision later.
 ```bash
 pwd
 make base
+./modules/when-not-to-scale/demo.sh
 make scale N=2
 make load            # observe p95 with NO cache/shard/queue
 ```
@@ -83,24 +85,27 @@ The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
-Read this as a restraint exercise. The commands intentionally avoid Redis,
-shards, queues, and extra profiles. The only scaling move is adding stateless app
-replicas.
+Read `./modules/when-not-to-scale/demo.sh` as the guided restraint exercise. It
+measures first, tries only the cheapest stateless scaling move, and asks you to
+write the metric that would justify adding more machinery later. The commands
+intentionally avoid Redis, shards, queues, and extra profiles.
 
 ## How to read the output
 
 If p95 stays healthy and error rates stay low, the base architecture is still
-sufficient for this load. If latency rises, identify the saturated component
-before choosing a mechanism. A slow query calls for indexing before sharding; a
-hot repeated read may justify caching; slow background work may justify a queue.
+sufficient for this load. Read p95 as the tail-latency signal, not the average:
+it shows whether the slower users are starting to feel pressure. If latency
+rises, identify the saturated component before choosing a mechanism. A slow
+query calls for indexing before sharding; a hot repeated read may justify
+caching; slow background work may justify a queue.
 
 ## What to observe
 
-1. The base system comfortably serves the k6 load with healthy p95 — *before*
+1. The base system comfortably serves the k6 load with healthy p95 - *before*
    any caching/partitioning and sharding machinery exists.
-2. Scaling app replicas (`N=2`) is a one-line change with no new subsystem — the
+2. Scaling app replicas (`N=2`) is a one-line change with no new subsystem - the
    cheapest scaling move, and often sufficient.
-3. The eventual ceiling is the **shared Postgres**, not the app tier — which
+3. The eventual ceiling is the **shared database**, not the app tier - which
    tells you the *next* move to investigate (add a read replica / tune the
    query), rather than jumping straight to "shard everything".
 
@@ -119,9 +124,9 @@ hot repeated read may justify caching; slow background work may justify a queue.
 
 ## Trade-offs
 
-- What is the single Postgres instance limited by here: CPU, connections, or IO
-  (input/output — reads and writes to disk)? Measure before assuming.
-- Which is cheaper: one bigger DB (*vertical* scaling — a more powerful machine)
+- What is the single database instance limited by here: CPU, connections, or IO
+  (input/output - reads and writes to disk)? Measure before assuming.
+- Which is cheaper: one bigger DB (*vertical* scaling - a more powerful machine)
   or the permanent operational cost of a shard? For most workloads the larger
   server remains sufficient for a long time, but this depends on growth rate and write
   volume, so re-check it with a number (estimation) rather than treating it as a rule.
@@ -137,9 +142,9 @@ hot repeated read may justify caching; slow background work may justify a queue.
 ## Further reading
 
 - "Use One Big Server" / scale-up arguments (e.g. https://specbranch.com/posts/one-big-server/)
-- "The Premature Optimization is the Root of All Evil" — Donald Knuth,
+- "The Premature Optimization is the Root of All Evil" - Donald Knuth,
   "Structured Programming with go to Statements" (ACM Computing Surveys, 1974).
-- *Designing Data-Intensive Applications*, Ch. 1 — "scaling up vs scaling out".
+- *Designing Data-Intensive Applications*, Ch. 1 - "scaling up vs scaling out".
 
 ## Cleanup
 

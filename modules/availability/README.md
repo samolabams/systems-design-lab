@@ -20,7 +20,7 @@ read reliability signals from the observability dashboard.
 
 "Highly available" is meaningless without a number. The difference between
 99.9% and 99.99% is the difference between ~9 hours and ~1 hour of downtime a
-year — and roughly an order of magnitude more engineering cost. This module
+year - and roughly an order of magnitude more engineering cost. This module
 gives the arithmetic for setting an affordable *target* and measuring whether the
 system is meeting it, so reliability becomes a managed number rather than a
 guess.
@@ -39,17 +39,18 @@ guess.
 ### Series vs parallel
 
 - **In series** (a request needs A *and* B): availabilities **multiply**.
-  `0.99 × 0.99 = 0.9801` — every added dependency lowers availability.
+  `0.99 × 0.99 = 0.9801` - every added dependency lowers availability.
 - **In parallel** (redundant replicas, need *any* one): failure probabilities
-  multiply. `1 − (0.01 × 0.01) = 0.9999` — redundancy produces extra nines
+  multiply. `1 − (0.01 × 0.01) = 0.9999` - redundancy produces extra nines
   (each digit of "9" is a tenfold cut in downtime). This is why scaling
   (extra app replicas) and replication and failover (a standby database) exist.
 
 ### SLI / SLO / SLA + error budgets
 
-- **SLI** — a measured signal (success rate, p95 latency).
-- **SLO** — an internal target (e.g. 99.9% success over 30 days).
-- **SLA** — the contractual promise to customers — usually a *weaker* target than
+- **SLI** - a measured signal, such as success rate or p95 latency. p95 latency
+  is the 95th percentile: 95% of requests completed at or below that time.
+- **SLO** - an internal target (e.g. 99.9% success over 30 days).
+- **SLA** - the contractual promise to customers - usually a *weaker* target than
   the SLO, so internal alerts fire before the contract is breached.
 - **Error budget** = `1 − SLO`. At 99.9%, the system may spend about 43 minutes
   per month on errors. **Burn rate** = how fast that budget is consumed; alert
@@ -62,7 +63,7 @@ The app already exposes `http_requests_total` (observability), so the SLO is com
 directly in Prometheus. The provisioned dashboard's **"SLO & error budget"** row
 renders three panels from these queries. (`rate(...[30m])` = the per-second rate
 averaged over the last 30 minutes; `status=~"5.."` = a regex matching HTTP 5xx
-error codes — server failures; `status!~"5.."` = everything that is *not* a 5xx,
+error codes - server failures; `status!~"5.."` = everything that is *not* a 5xx,
 i.e. the successes):
 
 ```promql
@@ -79,7 +80,8 @@ sum(rate(http_requests_total{status!~"5.."}[30m]))
 
 ```bash
 pwd
-make observability   # Grafana: http://localhost:3001
+make availability    # Grafana: http://localhost:3001
+./modules/availability/demo.sh
 make load               # generate traffic; observe RED + SLO/error-budget panels
 ```
 
@@ -87,9 +89,11 @@ The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
-Read `make observability` as starting the measurement system, not changing
-the application contract. Read `make load` as creating enough traffic for SLI,
-SLO, and burn-rate panels to have useful data.
+Read `make availability` as starting the measurement system, not changing
+the application contract. Read `./modules/availability/demo.sh` as the guided
+math-and-observation walkthrough. Read `make load` as creating enough traffic
+for SLI, SLO, and burn-rate panels to have useful data. **RED** means Rate,
+Errors, and Duration; it is a common dashboard pattern for service health.
 
 ## How to read the output
 
@@ -101,9 +105,9 @@ the speed at which that budget is being consumed.
 
 1. The **success-ratio** SLI sits near 100% under normal load (green).
 2. Inject errors (kill a replica, or `SLOW=1` to breach the latency SLO) and the
-   ratio dips — the **error budget** gauge starts draining.
+   ratio dips - the **error budget** gauge starts draining.
 3. A **fast-burn** condition (burn rate ≫ 1) is exactly what a good alert fires
-   on — not every single error.
+   on - not every single error.
 
 ## What you learned
 
@@ -134,8 +138,8 @@ the speed at which that budget is being consumed.
 
 ## Further reading
 
-- Google SRE Book — "Service Level Objectives": https://sre.google/sre-book/service-level-objectives/
-- Google SRE Workbook — "Alerting on SLOs" (multi-window burn rate):
+- Google SRE Book - "Service Level Objectives": https://sre.google/sre-book/service-level-objectives/
+- Google SRE Workbook - "Alerting on SLOs" (multi-window burn rate):
   https://sre.google/workbook/alerting-on-slos/
 - Brendan Gregg, "The USE Method" (resource-side reliability):
   https://www.brendangregg.com/usemethod.html

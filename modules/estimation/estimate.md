@@ -11,7 +11,7 @@ magnitude*, not precision.
 | Main memory reference | ~100 ns |
 | Redis GET (same DC) | ~0.1–0.5 ms |
 | SSD random read | ~50–150 µs |
-| Postgres indexed point read | ~0.2–1 ms |
+| Relational database indexed point read | ~0.2–1 ms |
 | Intra-DC network round trip | ~0.5 ms |
 | Cross-region round trip (US↔EU) | ~80–150 ms |
 | Kafka produce (acked) | ~1–5 ms |
@@ -45,7 +45,7 @@ Bandwidth   = peak QPS * payload size        = __________
 
 ## Sanity checks (do you actually need machinery?)
 
-- Writes/sec well under ~10k and storage under ~10 TB? A single tuned Postgres
+- Writes/sec well under ~10k and storage under ~10 TB? A single tuned relational database
   (+ read replica, replication and failover) likely suffices — do **not** shard yet (when not to scale).
 - Read-heavy with a hot set? A cache (caching) before a shard (partitioning and sharding).
 - 1M+ msgs/s of events? Now a log (Kafka, event streaming) earns its place.

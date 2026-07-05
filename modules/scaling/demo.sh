@@ -106,7 +106,7 @@ pause
 step "Scaling moves the bottleneck" \
      "more app replicas can increase pressure on shared dependencies"
 try_it "Name one dependency that receives more pressure when app replicas increase." \
-       "In this lab: PgBouncer and Postgres. In other systems: Redis, queues, external APIs, or shared file stores."
+     "Examples: a database, cache, queue, external API, or shared file store."
 checkpoint "Why does horizontal scaling not guarantee unlimited throughput?" \
            "The app tier can scale out, but shared dependencies eventually become the limit."
 

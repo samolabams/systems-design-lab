@@ -60,11 +60,11 @@ Then four distinctions do most of the work:
 
 - **Performance vs scalability.** Performance is how fast the system is for a
   given workload ("fast for one user"); *scalability* is its ability to cope with
-  increased load — to stay fast as users or data grow. A system can be fast and
+  increased load - to stay fast as users or data grow. A system can be fast and
   unscalable (one large in-memory server) or slow but scalable (adds capacity
   linearly). They are different goals with different fixes.
 - **Latency vs throughput.** Latency is time per operation; throughput is
-  operations per second. Optimizing one often hurts the other — batching raises
+  operations per second. Optimizing one often hurts the other - batching raises
   throughput but adds latency; per-request work lowers latency but caps
   throughput.
 - **Vertical vs horizontal scaling.** Vertical scaling means using a larger
@@ -79,11 +79,11 @@ Then four distinctions do most of the work:
 ## How it works
 
 The lab is built so these abstractions are physically demonstrable. The app is
-*stateless* (all state lives in Postgres), which is exactly what lets you run N
-identical replicas behind one gateway. "Scale" here is literally `--scale app=N`:
+*stateless* (all durable state lives outside the app process), which is exactly
+what lets you run N identical replicas behind one gateway. "Scale" here is literally `--scale app=N`:
 the same application code running on more containers. Latency-vs-throughput
 trade-offs are observed by holding the code fixed and changing only the load
-(VUs — *virtual users*, the simulated concurrent clients driven by k6) and the
+(VUs - *virtual users*, the simulated concurrent clients driven by k6) and the
 replica count.
 
 ## Run
@@ -91,13 +91,18 @@ replica count.
 ```bash
 pwd
 make base
+./modules/introduction/demo.sh
 make scale N=1 && make load     # baseline: fast for one user / light load
-make scale N=3 && make load     # same code, 3x compute — observe p95 under load
+make scale N=3 && make load     # same code, 3x compute - observe p95 under load
 ```
 
 The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
+
+Read `./modules/introduction/demo.sh` as the guided version of the commands
+below it. It pauses before each observation so you can predict what should
+happen and then connect the output to the vocabulary.
 
 Read `make scale N=1` and `make scale N=3` as changing only the number of app
 replicas. The application code, gateway, database, and load test stay the same.
@@ -109,17 +114,16 @@ users so latency and throughput can be observed under pressure.
 ## How to read the output
 
 Focus on request status codes, requests per second, and p95 latency. Status `200`
-or `302` means the request succeeded. Higher p95 under the same load means the
-system is slower for the tail of users. Lower p95 after adding replicas means
-horizontal scaling helped the app tier.
+or `302` means the request succeeded. **p95 latency** means the 95th percentile:
+95% of requests finished at or below that time, and the slowest 5% took longer.
+Higher p95 under the same load means the system is slower for the tail of users.
+Lower p95 after adding replicas means horizontal scaling helped the app tier.
 
 ## What to observe
 
-1. At **N=1** with light load, p95 latency (the latency 95% of requests come in
-  *under* — the slow tail that averages can hide) is
-   low — the system is *fast*.
-2. At **N=1** with ramped VUs, p95 climbs — fast, but not *scalable* yet.
-3. At **N=3**, p95 recovers under the same load — that is *scalability* (more
+1. At **N=1** with light load, p95 latency is low - the system is *fast*.
+2. At **N=1** with ramped VUs, p95 climbs - fast, but not *scalable* yet.
+3. At **N=3**, p95 recovers under the same load - that is *scalability* (more
   servers, unchanged code), only possible because the app is stateless.
 
 ## What you learned
@@ -133,16 +137,16 @@ horizontal scaling helped the app tier.
 
 1. Run `make scale N=2` and predict whether p95 lands between `N=1` and `N=3`.
 2. Hit `/health` several times and identify which app host served each request.
-3. Explain why adding app replicas would not help if Postgres is the bottleneck.
+3. Explain why adding app replicas would not help if the database is the bottleneck.
 
 ## Trade-offs
 
 - Which services are truly stateless? Hidden state, such as in-memory caches,
   sticky sessions, or local files, breaks horizontal scaling.
-- Vertical scaling is often the correct *first* move — simpler, no distribution
-  cost — until a measured ceiling forces horizontal (see when not to scale).
-- More replicas do not help if a *shared* dependency, such as the single
-  Postgres instance, is the bottleneck; that motivates replication and failover/caching/partitioning and sharding.
+- Vertical scaling is often the correct *first* move - simpler, no distribution
+  cost - until a measured ceiling forces horizontal (see when not to scale).
+- More replicas do not help if a *shared* dependency, such as the database, is
+  the bottleneck; that motivates replication and failover/caching/partitioning and sharding.
 
 ## Next steps
 
@@ -152,7 +156,7 @@ horizontal scaling helped the app tier.
 
 ## Further reading
 
-- Martin Kleppmann, *Designing Data-Intensive Applications* — Ch. 1
+- Martin Kleppmann, *Designing Data-Intensive Applications* - Ch. 1
   (reliability, scalability, maintainability). https://dataintensive.net/
 - "Latency Numbers Every Programmer Should Know" (interactive):
   https://colin-scott.github.io/personal_website/research/interactive_latency.html

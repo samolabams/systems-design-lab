@@ -36,35 +36,35 @@ shielding the caller and giving the dependency room to recover.
 
 A breaker is a small state machine wrapped around a remote call:
 
-- **CLOSED** — calls pass through. Count consecutive failures; when they reach a
+- **CLOSED** - calls pass through. Count consecutive failures; when they reach a
   threshold, **trip** to OPEN.
-- **OPEN** — short-circuit: return an error (or fallback) **immediately** without
-  calling the dependency, for a cool-down period. This is the key move — failing
+- **OPEN** - short-circuit: return an error (or fallback) **immediately** without
+  calling the dependency, for a cooldown period. This is the key move - failing
   in microseconds instead of waiting on a timeout per call.
-- **HALF_OPEN** — after the cool-down, let **one** probe through. Success →
-  CLOSED (recovered). Failure → back to OPEN (still sick).
+- **HALF_OPEN** - after the cooldown, let **one** probe through. Success moves to
+  CLOSED (recovered). Failure moves back to OPEN (still sick).
 
 Companions to a breaker:
-- **Timeout** — never wait forever; bound every remote call.
-- **Retry with backoff + jitter** — retry *transient* errors, but spread retries
+- **Timeout** - never wait forever; bound every remote call.
+- **Retry with backoff + jitter** - retry *transient* errors, but spread retries
   out so clients do not synchronize a thundering herd.
-- **Fallback** — serve cached/default data when the breaker is open, where a safe fallback exists.
+- **Fallback** - serve cached/default data when the breaker is open, where a safe fallback exists.
 
-The whole pattern in language-neutral pseudocode — no JavaScript required:
+The whole pattern in language-neutral pseudocode - no JavaScript required:
 
 ```text
 on call(request):
     if state == OPEN:
-        if now - opened_at >= cooldown:   # cool-down elapsed → try one probe
+        if now - opened_at >= cooldown:   # cooldown elapsed; try one probe
             state = HALF_OPEN
         else:
-            return error "circuit OPEN — failing fast"   # shed instantly
+            return error "circuit OPEN - failing fast"   # shed instantly
 
     try:
         result = dependency(request) with timeout(call_timeout)
         on success:
             failures = 0
-            if state == HALF_OPEN: state = CLOSED   # probe healed → recover
+            if state == HALF_OPEN: state = CLOSED   # probe healed; recover
             return result
     on failure or timeout:
         failures += 1
@@ -128,13 +128,13 @@ resumes.
 
 ## What to observe
 
-1. **CLOSED / healthy** — the first calls return `OK`.
-2. **Tripping** — once the dependency starts failing, three failures flip the
+1. **CLOSED / healthy** - the first calls return `OK`.
+2. **Tripping** - once the dependency starts failing, three failures flip the
    breaker `CLOSED -> OPEN`.
-3. **Fail fast** — while `OPEN`, calls return `circuit OPEN — failing fast`
+3. **Fail fast** - while `OPEN`, calls return `circuit OPEN - failing fast`
    instantly; they never touch the dependency or pay the 200ms timeout. The
    summary line counts how many were shed this way.
-4. **Probe & recover** — after the cool-down the breaker goes `OPEN -> HALF_OPEN`,
+4. **Probe & recover** - after the cooldown the breaker goes `OPEN -> HALF_OPEN`,
    a probe succeeds once the dependency heals, and it returns `HALF_OPEN ->
    CLOSED`.
 
@@ -148,21 +148,21 @@ resumes.
 ## Practice experiments
 
 1. Change the failure threshold in `breaker.js` and predict when OPEN appears.
-2. Change the cool-down and observe how often probes are allowed.
+2. Change the cooldown and observe how often probes are allowed.
 3. Decide what safe fallback could exist for a read endpoint.
 4. Explain why retries without jitter can make an outage worse.
 
 ## Trade-offs
 
-- **Threshold & cool-down tuning** — trip too eagerly and you reject during blips;
+- **Threshold & cooldown tuning** - trip too eagerly and you reject during blips;
   trip too late and the breaker does not protect anything. Tune to the dependency's real
   failure profile.
-- **Fail fast vs availability** — an open breaker trades a *correct* slow answer
+- **Fail fast vs availability** - an open breaker trades a *correct* slow answer
   for a *fast* error (or fallback). That is usually right, but a fallback that
   serves stale data has its own correctness cost.
-- **Per-dependency, not global** — one breaker per downstream. A shared breaker
+- **Per-dependency, not global** - one breaker per downstream. A shared breaker
   would let one sick dependency cut off healthy ones.
-- **Retry storms** — breakers and retries interact: always add jitter, and do not
+- **Retry storms** - breakers and retries interact: always add jitter, and do not
   retry through an open breaker.
 
 ## Next steps
@@ -175,7 +175,7 @@ resumes.
 
 - Martin Fowler, "CircuitBreaker":
   https://martinfowler.com/bliki/CircuitBreaker.html
-- Michael Nygard, *Release It!* — Circuit Breaker & Bulkhead stability patterns.
+- Michael Nygard, *Release It!* - Circuit Breaker & Bulkhead stability patterns.
 - AWS Builders' Library, "Timeouts, retries and backoff with jitter":
   https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/
 - Netflix Hystrix wiki (the canonical implementation):

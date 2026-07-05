@@ -93,13 +93,13 @@ The key vocabulary:
 - **Horizontal scaling** - increasing the number of machines, processes, or replicas.
 - **Replica** - one running copy of a service.
 - **Stateless service** - a service that does not keep required per-client state in local memory. Any replica can serve the next request.
-- **Shared dependency** - a component used by all replicas, such as Postgres, Redis, a queue, or an external API.
+- **Shared dependency** - a component used by all replicas, such as a database, cache, queue, or external API.
 
 ## Why statelessness matters
 
 Horizontal scaling works cleanly only when the app tier is stateless.
 
-A stateless app keeps durable state outside the process. In this lab, URL data lives in Postgres, not in one app container's memory. That means any app replica can receive a request and still read or write the same underlying data.
+A stateless app keeps durable state outside the process. In this lab, URL data lives in the database, not in one app container's memory. That means any app replica can receive a request and still read or write the same underlying data.
 
 If a service stores required session data in local memory, horizontal scaling becomes fragile:
 
@@ -124,7 +124,7 @@ A common path is to use both. Start with a reasonably sized machine, then scale 
 Scaling the app tier does not automatically fix every bottleneck. More app replicas can create more pressure on shared dependencies:
 
 ```text
-more app replicas -> more database connections -> Postgres becomes the bottleneck
+more app replicas -> more database work -> the database becomes the bottleneck
 ```
 
 This is why the guide later covers connection pooling, replication, caching, sharding, queues, and backpressure. Scaling one tier can move the bottleneck to another tier.
@@ -136,7 +136,7 @@ Scaling also does not fix inefficient code, slow queries, hot keys, lock content
 The base stack starts one app service behind the gateway:
 
 ```text
-host curl -> gateway -> app replica(s) -> pgbouncer -> postgres-primary
+host curl -> gateway -> app replica(s) -> database access layer -> relational database
 ```
 
 Docker Compose can run several copies of the same app service:
@@ -253,7 +253,7 @@ This output proves the app tier has multiple replicas because repeated `/api/hea
 5. **Scale farther** - with `N=5`, more replicas exist, but short samples may not show perfect distribution.
 6. **Scale down** - reducing to `N=2` removes replicas without changing the public gateway address.
 7. **Same code, more copies** - horizontal scaling changes the number of running app processes, not the app code.
-8. **Shared dependency ceiling** - more app replicas can create more database connections and more pressure on Postgres.
+8. **Shared dependency ceiling** - more app replicas can create more database work and more pressure on the data tier.
 
 ## What you learned
 
@@ -277,8 +277,8 @@ After the guided demo, change one thing at a time and predict the effect before 
 - **Vertical scaling is simpler but finite.** A bigger server is easy to reason about, but it has a practical and financial ceiling.
 - **Horizontal scaling raises the ceiling but adds coordination.** More replicas require routing, health checks, service discovery, and shared state.
 - **Statelessness is the price of admission.** Store required per-client state in local memory and the next request may land on a replica that does not have it.
-- **Linear scaling has a ceiling.** Throughput grows only until a shared dependency, such as Postgres, PgBouncer, Redis, a queue, or an external API, becomes the bottleneck.
-- **More replicas increase dependency pressure.** App replicas can create more database connections; without pooling, Postgres can exhaust connection capacity before the app tier is saturated.
+- **Linear scaling has a ceiling.** Throughput grows only until a shared dependency, such as a database, cache, queue, or external API, becomes the bottleneck.
+- **More replicas increase dependency pressure.** App replicas can create more database work; without connection management, the data tier can exhaust capacity before the app tier is saturated.
 - **Scaling can hide inefficient design.** Adding replicas may postpone a problem without fixing slow queries, large payloads, hot keys, or lock contention.
 
 ## Next steps

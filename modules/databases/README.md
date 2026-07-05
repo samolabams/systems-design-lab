@@ -91,10 +91,13 @@ mean every system should use Postgres.
 The generic ideas above become concrete in the base stack:
 
 ```text
-app -> PgBouncer -> Postgres primary
+app -> connection pooler -> Postgres primary
 ```
 
-The app talks to PgBouncer, a connection pooler. PgBouncer talks to the Postgres primary. The database itself is not exposed directly to your host browser; it is on the internal Docker network.
+The app talks to a connection pooler, which multiplexes many short-lived app
+connections onto a smaller set of persistent database connections. The pooler
+talks to the Postgres primary. The database itself is not exposed directly to
+your host browser; it is on the internal Docker network.
 
 The app migration creates one table:
 

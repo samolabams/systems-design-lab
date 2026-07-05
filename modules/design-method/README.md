@@ -19,7 +19,7 @@ should be a justified design artifact, not a list of favorite technologies.
 
 ## Why this matters
 
-A systems-design discussion — in an interview or a real review — goes badly when
+A systems-design discussion - in an interview or a real review - goes badly when
 it is improvised: a database choice is made before the QPS is known, or a
 queue nobody needed. A repeatable method keeps the conversation *driven*: clarify
 first, estimate, then justify each component against the numbers. This is the
@@ -30,34 +30,34 @@ rubric used to self-assess every capstone (TinyURL capstone–distributed rate l
 The method merges the common 4-step framing (RESHADED / "the Primer") into six
 explicit steps:
 
-1. **Requirements** — functional + non-functional; clarify scope and the *one*
+1. **Requirements** - functional + non-functional; clarify scope and the *one*
    metric that matters most (latency? consistency? availability?). Decompose the
-   vague problem statement with a **parts-of-speech pass** — literally read the problem
+   vague problem statement with a **parts-of-speech pass** - literally read the problem
    statement and sort its words into verbs, nouns, and adjectives, because each
    part of speech maps to a different part of the design:
-   - **Verbs → use cases.** "Users *post* tweets, *view* feeds" → the functional
+  - **Verbs -> use cases.** "Users *post* tweets, *view* feeds" -> the functional
      requirements (the API surface).
-   - **Nouns → entities & ownership.** "*Users*, *tweets*, *follows*" → the data
+  - **Nouns -> entities & ownership.** "*Users*, *tweets*, *follows*" -> the data
      model and, for each, the *one* service that is its source of truth.
-   - **Adjectives → constraints (and the components they force).** Each adjective
-     buys a component: *instant* → cache / precompute (compute the answer ahead
-     of time) / websockets · *reliable* → retries, idempotency (safe to repeat),
-     DLQ (dead-letter queue — a holding area for messages that keep failing) ·
-     *highly available* → replication, stateless services (keep no per-client
-     data, so any copy can serve any request), health checks · *scalable* →
+   - **Adjectives -> constraints (and the components they force).** Each adjective
+     buys a component: *instant* -> cache / precompute (compute the answer ahead
+     of time) / websockets; *reliable* -> retries, idempotency (safe to repeat),
+     DLQ (dead-letter queue - a holding area for messages that keep failing) ·
+    *highly available* -> replication, stateless services (keep no per-client
+    data, so any copy can serve any request), health checks; *scalable* ->
     partitioning, read replicas, queues. The goal is not to include technology
     for its own sake; each component must be justified by the requirement that
     demands it.
-2. **Estimates** — back-of-the-envelope (estimation): QPS, storage, bandwidth,
+2. **Estimates** - back-of-the-envelope (estimation): QPS, storage, bandwidth,
    read:write ratio.
-3. **High-level design** — architecture diagram: clients → gateway → services → data.
-4. **Core components** — pick building blocks and *justify each* (use the
+3. **High-level design** - architecture diagram: clients -> gateway -> services -> data.
+4. **Core components** - pick building blocks and *justify each* (use the
    [component-selection](../component-selection/README.md) catalog to choose
    between alternatives).
-5. **Scale & bottlenecks** — find the limiting resource, then apply caching (caching),
+5. **Scale & bottlenecks** - find the limiting resource, then apply caching (caching),
    replication (replication and failover), sharding (partitioning and sharding), or queues (async queues) **only where the numbers
    demand it** (when not to scale).
-6. **Trade-offs** — state what you gave up (consistency, cost, complexity) and why.
+6. **Trade-offs** - state what you gave up (consistency, cost, complexity) and why.
 
 ## How it works
 
@@ -68,9 +68,9 @@ are recalling mechanisms that have already been observed in the lab.
 
 ### The reference architecture ("master template")
 
-Most read-heavy, write-buffered systems — ones that serve far more reads than
+Most read-heavy, write-buffered systems - ones that serve far more reads than
 writes, and where writes can be queued and applied slightly later rather than
-synchronously — collapse onto one default shape. Reach for it first, then justify
+synchronously - collapse onto one default shape. Reach for it first, then justify
 every deviation:
 
 ```
@@ -81,29 +81,29 @@ every deviation:
    └──────▶ gateway ─▶ write service ─▶ queue ─▶ workers ─▶ DB + cache
 ```
 
-- **Write path** — the write service drops the request on a **queue** (async queues) and
+- **Write path** - the write service drops the request on a **queue** (async queues) and
   returns immediately; **workers** update the **DB** (source of truth) and
   *warm* the **cache** (pre-populate it with the fresh value so the next read is
   a hit). Buffering absorbs spikes and decouples producer from consumer.
-- **Read path** — serve from **cache** (caching); fall back to the **DB** on a miss.
+- **Read path** - serve from **cache** (caching); fall back to the **DB** on a miss.
   Reads scale with replicas (replication and failover); the DB stays the source of truth, not the
   **hot path** (the code that runs on every single request, where speed matters
   most).
 
-This one picture ties replication and failover (replication), async queues (queues), and caching (caching) together —
+This one picture ties replication and failover (replication), async queues (queues), and caching (caching) together -
 step 4 is largely the decision about which parts of this template the problem requires.
 
 ### Level-based expectations
 
-- **Mid** — covers the basics correctly; reasonable components; few gaps.
-- **Senior** — moves fast through the basics, then goes **deep in 1–2 areas**
+- **Mid** - covers the basics correctly; reasonable components; few gaps.
+- **Senior** - moves fast through the basics, then goes **deep in 1–2 areas**
   (hot-key problem, exactly-once, etc.); quantifies trade-offs.
-- **Staff** — drives the ambiguity, *sets* the requirements, owns cross-cutting
+- **Staff** - drives the ambiguity, *sets* the requirements, owns cross-cutting
   trade-offs (cost, org boundaries, failure domains, migration path).
 
 ## Run
 
-There's nothing to start — instead, *apply* the method. Start with the worked
+There's nothing to start - instead, *apply* the method. Start with the worked
 example below before trying a full capstone on your own.
 
 ### Worked example: design a short-link service
@@ -127,15 +127,17 @@ justified.
 Now apply the same shape to a capstone:
 
 ```bash
+./modules/design-method/demo.sh
 # Pick a capstone exercise (TinyURL capstone–distributed rate limiter capstone) and work the six steps on paper,
 # then build the relevant components and grade yourself with method.md.
 ```
 
 ## How to read the commands
 
-This module has no service to start. Read the shell block as an instruction to
-produce an artifact: a design write-up. The command-like steps are the six design method
-method steps, not infrastructure commands.
+This module has no service to start. Read `./modules/design-method/demo.sh` as a
+guided design workshop: it asks for predictions and checkpoints, but the output
+you keep is a design write-up. The command-like steps are the six design method
+steps, not infrastructure commands.
 
 ## How to read the output
 
@@ -146,7 +148,7 @@ it, the design is not justified yet.
 
 ## What to observe
 
-1. Designs improve most at **step 1** — over half of bad designs come from
+1. Designs improve most at **step 1** - over half of bad designs come from
    skipping requirements clarification.
 2. Step 5 should reference **step 2's numbers**; if you add a cache without an
   estimate, that is the when not to scale anti-pattern.
@@ -170,7 +172,7 @@ it, the design is not justified yet.
 
 ## Trade-offs
 
-- The method is a scaffold, not a script — senior+ candidates spend *less* time
+- The method is a scaffold, not a script - senior+ candidates spend *less* time
   on basics and more on the 1–2 hard parts.
 - "Justify each component" is the central rule: every component must justify its
   complexity through a measured estimate or an explicit requirement.
@@ -185,9 +187,9 @@ it, the design is not justified yet.
 
 - "System Design Primer" (the widely used step framework):
   https://github.com/donnemartin/system-design-primer
-- Google SRE Book — "Designing for Reliability" (non-functional requirements):
+- Google SRE Book - "Designing for Reliability" (non-functional requirements):
   https://sre.google/sre-book/
-- *Designing Data-Intensive Applications* — Part III ties the components together.
+- *Designing Data-Intensive Applications* - Part III ties the components together.
 
 ## Cleanup
 

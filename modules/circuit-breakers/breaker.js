@@ -3,11 +3,11 @@
 // Run with Node (no dependencies):  node breaker.js
 //
 // The breaker has three states:
-//   CLOSED     — calls pass through. Consecutive failures are counted; when they
+//   CLOSED     - calls pass through. Consecutive failures are counted; when they
 //                reach the threshold the breaker trips to OPEN.
-//   OPEN       — calls fail FAST (no call to the dependency) for a cool-down
+//   OPEN       - calls fail FAST (no call to the dependency) for a cooldown
 //                window, giving the struggling dependency room to recover.
-//   HALF_OPEN  — after the cool-down, ONE probe call is allowed through. If it
+//   HALF_OPEN  - after the cooldown, ONE probe call is allowed through. If it
 //                succeeds the breaker closes; if it fails it re-opens.
 //
 // This is the pattern that stops a slow/failing dependency from exhausting your
@@ -44,10 +44,10 @@ class CircuitBreaker {
   }
 
   async call() {
-    // OPEN: fail fast until the cool-down elapses, then allow one probe.
+    // OPEN: fail fast until the cooldown elapses, then allow one probe.
     if (this.state === 'OPEN') {
       if (Date.now() - this.openedAt < this.cooldownMs) {
-        throw new Error('circuit OPEN — failing fast');
+        throw new Error('circuit OPEN - failing fast');
       }
       this._to('HALF_OPEN');
     }
@@ -125,7 +125,7 @@ async function main() {
   }
 
   console.log(
-    `\nSummary: ${fastFails} requests failed FAST while the circuit was OPEN — ` +
+    `\nSummary: ${fastFails} requests failed FAST while the circuit was OPEN - ` +
       `those never touched the struggling dependency.`
   );
 }

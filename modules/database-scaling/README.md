@@ -64,8 +64,8 @@ not solve the real limit.
 This module is a decision tree over the data tier. The concept is independent of
 any one database product. The lab inspects the current base-stack data path, then
 connects each kind of pressure to the later module that demonstrates the
-mechanism. The base stack already includes PgBouncer, so connection pooling is
-visible before adding any distributed data system.
+mechanism. The base stack already includes a connection pooler, so connection
+pooling is visible before adding any distributed data system.
 
 ## The decision tree
 
@@ -74,7 +74,7 @@ Use the cheapest correct move before adding distributed complexity.
 | If the pressure is... | First investigate... | Later mechanism |
 |---|---|---|
 | One query is slow | query plan, index, schema/access pattern | better indexes or query rewrite |
-| Too many app connections | connection pooling | PgBouncer-style pool |
+| Too many app connections | connection pooling | connection pooler |
 | Machine is near CPU/RAM/IO limits | vertical scaling | larger instance, faster disk |
 | Reads dominate | read replicas or cache | Replication and failover, caching |
 | Primary may fail | standby and failover | replication and failover, leader election |
@@ -110,8 +110,11 @@ Scaling app replicas can accidentally harm the database. Ten app replicas with l
 Connection pooling keeps many app requests flowing through a smaller number of database sessions. In this lab, the base path is:
 
 ```text
-app replicas -> PgBouncer -> Postgres primary
+app replicas -> connection pooler -> Postgres primary
 ```
+
+The transferable concept is the pool between many app processes and fewer
+database sessions.
 
 ### 4. Scale reads differently from writes
 
@@ -179,7 +182,7 @@ module such as replication and failover, partitioning and sharding, caching, or 
 
 ## How to read the output
 
-Output showing PgBouncer in the path points to connection management. Output
+Output showing the connection pooler in the path points to connection management. Output
 showing private Postgres networking points to isolation. Output showing one
 shared database behind many app replicas explains why app scaling and database
 scaling are different problems.
@@ -188,7 +191,7 @@ scaling are different problems.
 
 1. **The database is private** - the host reaches the app through the gateway, not Postgres directly.
 2. **The app tier can scale faster than the data tier** - app replicas are interchangeable, but they still share one database.
-3. **Connection pooling is already in the path** - PgBouncer sits between app replicas and Postgres.
+3. **Connection pooling is already in the path** - the pooler sits between app replicas and Postgres.
 4. **A slow query is not a reason to shard** - inspect the query path and indexes first.
 5. **Different pressures point to different modules** - read scale, failover, election, sharding, caching, and queues solve different problems.
 

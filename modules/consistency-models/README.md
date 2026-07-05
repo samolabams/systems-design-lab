@@ -63,6 +63,7 @@ eventual consistency; the rejected write in leader election *is* a CP partition 
 
 ```bash
 pwd
+./modules/consistency-models/demo.sh
 make replication-failover   # eventual + read-your-writes hazard (live)
 ./modules/replication-failover/demo.sh
 make leader-election-replica-sets   # CP under partition (automatic election)
@@ -73,10 +74,12 @@ The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
-The replication and failover commands show consistency during normal operation with asynchronous
-replication. The leader election commands show behavior during a partition or node failure.
-Read them as two different questions: what can a read see, and what should a
-cluster do when not all nodes can agree?
+Read `./modules/consistency-models/demo.sh` as the map of models to runnable lab
+steps. The replication and failover commands show consistency during normal
+operation with asynchronous replication. The leader election commands show
+behavior during a partition or node failure. Read them as two different
+questions: what can a read see, and what should a cluster do when not all nodes
+can agree?
 
 ## How to read the output
 
@@ -87,14 +90,14 @@ a CP choice: preserve a single history even if some clients cannot write.
 
 ## What to observe
 
-1. A read from the **primary** always reflects the latest write — *strong*.
+1. A read from the **primary** always reflects the latest write - *strong*.
 2. The same read from the **async replica** (an *asynchronous* copy that applies
    changes a moment after the primary, rather than in lock-step) can miss a
-   just-written row until the WAL — the write-ahead log the primary streams to
-   its replicas (replication and failover) — catches up. That is *eventual* consistency, and the
+   just-written row until the WAL - the write-ahead log the primary streams to
+   its replicas (replication and failover) - catches up. That is *eventual* consistency, and the
    read-your-writes hazard, in action.
-3. Pinning a client to one replica removes the "time going backwards" flicker —
-   *monotonic reads* — at the cost of balance (load balancing `ip_hash`).
+3. Pinning a client to one replica removes the "time going backwards" flicker -
+   *monotonic reads* - at the cost of balance (load balancing `ip_hash`).
 
 ## What you learned
 

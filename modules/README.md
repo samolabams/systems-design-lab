@@ -1,10 +1,11 @@
-# modules/ — the guide
+# modules/ - the guide
 
-Each folder is one self-contained lesson. Folder names are semantic slugs that
-match Make targets, so you can run the same name they see in the
-guide. For lessons that add infrastructure, the folder name also matches
-the Compose profile; lessons that reuse the base stack keep the same target
-without adding a profile.
+Each folder is one self-contained lesson. Runnable lesson folder names are
+semantic slugs that match Make targets, so you can run the same name you see in
+the guide. For lessons that add infrastructure, the folder name also matches the
+Compose profile when possible; lessons that reuse the base stack keep the same
+target without adding a profile. Capstone folders are design exercises rather
+than predefined Make targets.
 
 > **Status:** *Runnable* = the lesson has working commands and, where useful, a
 > guided demo; *Design exercise* = a capstone exercise worked on paper with
@@ -25,7 +26,7 @@ through reproducible demonstrations, not only through prose descriptions.
 **Read in this order; no prior systems-design knowledge is assumed:**
 
 1. **Foundations first.** The vocabulary and reasoning. Begin with
-   [Introduction to systems design](introduction/README.md) — it defines the words
+   [Introduction to systems design](introduction/README.md) - it defines the words
    every later lesson uses (latency, throughput, stateless, ...).
 2. **Then components in the grouped order below.** Start real infrastructure and
    observe each foundation concept in a running system: replica lag, queue
@@ -74,9 +75,9 @@ and a working presigned URL" is more useful than "MinIO commands."
 
 | Track | Covers | Runs on |
 |---|---|---|
-| **Foundations** | *How to reason and decide* — concepts, math, method | `base` |
-| **Components** | *How a mechanism works* — real infrastructure you stand up or inspect | `base`, sometimes with a profile |
-| **Capstones** | *Design a whole system yourself* — self-directed exercises against the design-method rubric | paper (optional prototype) |
+| **Foundations** | *How to reason and decide* - concepts, math, method | `base` or a named supporting profile |
+| **Components** | *How a mechanism works* - real infrastructure you stand up or inspect | `base`, sometimes with a profile |
+| **Capstones** | *Design a whole system yourself* - self-directed exercises against the design-method rubric | paper (optional prototype) |
 
 **Foundations provide the reasoning framework; components provide the executable
 mechanism.** Foundations define a trade-off in the abstract; components
@@ -89,12 +90,12 @@ failure mode through a replica-lag demonstration.
 ## The core challenges (problem → mechanism map)
 
 Almost all scaling work answers one of a handful of recurring problems. This is
-the "which lesson solves my problem" lookup — **foundations name the problem,
+the "which lesson solves my problem" lookup - **foundations name the problem,
 components build the fix**:
 
 | Challenge | Symptom | Mechanism | Where |
 |---|---|---|---|
-| Too many concurrent users | one server reaches its RPS ceiling | replicate logic (load balancing) + read replicas | [Load balancing](load-balancing/README.md), [scaling](scaling/README.md), [replication](replication-failover/README.md) |
+| Too many concurrent users | one server reaches its RPS (requests per second) ceiling | replicate logic (load balancing) + read replicas | [Load balancing](load-balancing/README.md), [scaling](scaling/README.md), [replication](replication-failover/README.md) |
 | Too much data for one machine | data exceeds one node's storage or throughput capacity | partition by key (sharding) | [Partitioning & sharding](partitioning-sharding/README.md) |
 | Writes too slow to be synchronous | request blocks on slow work | make it async with a queue | [Asynchronous processing and queues](async-queues/README.md) |
 | Reads hammer the database | repeated reads overload the DB | cache hot data; push to the edge | [Caching](caching/README.md), [edge caching/CDN](edge-caching/README.md) |
@@ -102,7 +103,7 @@ components build the fix**:
 
 The first four come straight from the classic "core challenges of a web-scale
 app"; the fifth is the tax you pay for solving the others. Reach for a mechanism
-only when an estimate says the problem is real — adding one without a number is
+only when an estimate says the problem is real - adding one without a number is
 the "when not to scale" anti-pattern.
 
 ## Foundations (reasoning layer, run on `base`)
@@ -174,19 +175,20 @@ Each term is also defined where it first appears, but these come up everywhere:
 
 | Term | Plain meaning |
 |---|---|
-| **QPS / RPS** | Queries / Requests Per Second — how much traffic the system handles. |
-| **TPS** | Transactions Per Second — like QPS, but counting database transactions (writes). |
+| **QPS / RPS** | Queries / Requests Per Second - how much traffic the system handles. |
+| **TPS** | Transactions Per Second - like QPS, but counting database transactions (writes). |
 | **Latency** | How long *one* request takes (e.g. 20 ms). |
-| **Throughput** | How many requests finish per second — the system's capacity. |
+| **Throughput** | How many requests finish per second - the system's capacity. |
 | **p95 / p99** | 95th / 99th *percentile* latency: 95% (or 99%) of requests complete faster than this value. These percentiles expose slow-tail behavior that averages can hide. |
-| **RTT** | Round-Trip Time — how long a packet takes to reach another machine and come back. |
-| **VU** | Virtual User — one simulated concurrent client in the k6 load tool (`make load`). |
+| **RTT** | Round-Trip Time - how long a packet takes to reach another machine and come back. |
+| **VU** | Virtual User - one simulated concurrent client in the k6 load tool (`make load`). |
 | **Stateless** | A service that keeps no per-client data in memory, so any copy can serve any request; see [Introduction to systems design](introduction/README.md) and [Scaling](scaling/README.md). |
 | **Idempotent** | An operation that is safe to repeat: doing it twice has the same effect as doing it once; this matters when a queue redelivers a message. |
-| **WAL** | Write-Ahead Log — an append-only record of changes written before data pages are updated; it supports crash recovery and replication. |
+| **WAL** | Write-Ahead Log - an append-only record of changes written before data pages are updated; it supports crash recovery and replication. |
 | **Replica / standby** | A copy of a database that follows the primary, often used for read scaling, failover, or disaster recovery; see [Replication & failover](replication-failover/README.md). |
 | **Gateway / reverse proxy** | An entry point that receives client traffic, applies shared request policies, and forwards traffic to internal services; see [Load balancing](load-balancing/README.md). |
 | **SLI / SLO / SLA** | Measured signal / internal target / contractual promise for reliability; see [Availability & reliability math](availability/README.md). |
+| **RED metrics** | Rate, Error count, and Duration: a common dashboard view for service health; see [Observability](observability/README.md). |
 | **RPO / RTO** | How much data you may lose / how long recovery may take, in a disaster; see [Multi-region, DR & backups](multi-region-dr/README.md). |
 | **AMQP** | The messaging protocol RabbitMQ speaks; see [Asynchronous processing and queues](async-queues/README.md). |
 | **Eventual consistency** | Copies of the data may lag but agree *eventually* once updates propagate; a read just after a write can miss it. |
@@ -194,8 +196,8 @@ Each term is also defined where it first appears, but these come up everywhere:
 | **Quorum** | The minimum number of participants required to accept a decision, often a majority (`floor(N / 2) + 1`) so two successful decisions cannot be made by disjoint groups. |
 | **Consensus** | How nodes agree on one value (e.g. who is leader) despite crashes; Raft and Paxos are the classic algorithms. |
 | **Shard** | One horizontal slice of a dataset split across machines by key, so no single node holds it all; see [Partitioning & sharding](partitioning-sharding/README.md). |
-| **Hot key / hot set** | The small slice of data that receives most of the traffic — the part worth caching, pushing to the edge, or protecting. |
-| **TTL** | Time To Live — a countdown after which a cache entry, lease, or registration expires. |
+| **Hot key / hot set** | The small slice of data that receives most of the traffic - the part worth caching, pushing to the edge, or protecting. |
+| **TTL** | Time To Live - a countdown after which a cache entry, lease, or registration expires. |
 | **Embedding / vector store** | An embedding is a numeric vector representation of meaning or features; a vector store/index supports nearest-neighbor search over embeddings for semantic retrieval, recommendations, image similarity, or similar-item search. |
 
 ## Why folders match commands

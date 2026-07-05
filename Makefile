@@ -1,4 +1,4 @@
-# Systems Design Lab — Make targets (§6).
+# Systems Design Lab - Make targets (§6).
 # A module's Make target == its modules/<slug>/ folder name. Most component
 # targets also enable a Compose profile; a few lessons reuse the base stack.
 
@@ -21,10 +21,11 @@ PROFILE_MODULES := replication-failover dns async-queues observability \
                    service-discovery sagas vector-store
 
 # Runnable lessons that reuse the base stack instead of adding a Compose profile.
-BASE_MODULES := api-gateway load-balancing scaling databases database-scaling api-design
+BASE_MODULES := introduction design-method estimation when-not-to-scale component-selection \
+				api-gateway load-balancing scaling databases database-scaling api-design
 
 # Runnable lessons backed by a different profile name.
-ALIAS_MODULES := multi-region-dr
+ALIAS_MODULES := availability consistency-models multi-region-dr
 
 VALIDATE_MODULES := $(PROFILE_MODULES) $(BASE_MODULES) $(ALIAS_MODULES)
 
@@ -33,7 +34,7 @@ EXTRA_PROFILES := load-balancing-haproxy
 .PHONY: help base all validate validate-profile up down reset ps logs scale chaos load smoke $(PROFILE_MODULES) $(BASE_MODULES) $(ALIAS_MODULES) $(EXTRA_PROFILES)
 
 help: ## Show this help.
-	@echo "Systems Design Lab — targets:"
+	@echo "Systems Design Lab - targets:"
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS=":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 	@echo ""
@@ -58,6 +59,14 @@ $(PROFILE_MODULES): ## Start base + the named module profile (e.g. make async-qu
 $(BASE_MODULES): ## Start base for lessons that reuse the always-on stack.
 	$(DC) up -d --build
 	@echo "Started base for module '$@'."
+
+availability: ## Start the observability profile used by the availability lesson.
+	$(DC) --profile observability up -d --build
+	@echo "Started observability profile for module 'availability'. Grafana: http://localhost:$${GRAFANA_PORT:-3001}"
+
+consistency-models: ## Start the replication/election profiles used by the consistency lesson.
+	$(DC) --profile replication-failover --profile leader-election-replica-sets up -d --build
+	@echo "Started replication and leader-election profiles for module 'consistency-models'."
 
 multi-region-dr: ## Start the replication/failover profile used by the DR lesson.
 	$(DC) --profile replication-failover up -d --build

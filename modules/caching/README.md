@@ -134,18 +134,18 @@ The general caching roles are represented by local containers in this lab:
 |---|---|
 | client-facing service | URL-shortener app |
 | cache | Redis |
-| origin / source of truth | Postgres primary |
+| origin / source of truth | durable database |
 | observable behavior | hit/miss counters |
 
 A URL shortener is a useful cache example because one short code may be created
 once but redirected many times. If every redirect goes to the database, the
 database spends connections, CPU, and disk I/O answering the same lookup again
 and again. With caching enabled, a repeated redirect can read from Redis instead
-of Postgres:
+of the database:
 
 ```text
 client -> gateway -> app -> Redis
-                         -> Postgres only on cache miss
+                         -> database only on cache miss
 ```
 
 The profile starts Redis next to the base stack. The important request path is
@@ -155,7 +155,7 @@ the redirect handler in the URL-shortener app:
 GET /:code
   -> read Redis key link:<code>
   -> on hit, return 302 with the cached URL
-  -> on miss, read Postgres, set Redis key with a TTL, return 302
+  -> on miss, read the database, set Redis key with a TTL, return 302
 ```
 
 The helper code lives in [apps/url-shortener/src/cache.js](../../apps/url-shortener/src/cache.js).
@@ -163,15 +163,15 @@ That file wraps Redis access so the rest of the app can use cache operations
 such as `get`, `set`, and `del` without knowing the Redis protocol.
 
 Writes also **warm** the cache. When `POST /shorten` creates a new mapping, the
-app stores the new `link:<code>` value in Redis as well as Postgres. That means
+app stores the new `link:<code>` value in Redis as well as the database. That means
 the first redirect after creation can already be a cache hit. This is useful for
 the lab, and it is a deliberate write-through-style choice, but the source of
-truth is still Postgres.
+truth is still the database.
 
 The cache client is **fail-open**. If Redis is not configured or is temporarily
 unavailable, cache operations become no-ops and the app falls back to the
 database path. That keeps Redis from becoming a hard dependency for correctness.
-The system may become slower and put more load on Postgres, but it should still
+The system may become slower and put more load on the database, but it should still
 answer from the origin.
 
 The app exports cache metrics for observability:
@@ -182,7 +182,7 @@ cache_requests_total{result="miss"}
 ```
 
 Those counters let you calculate cache hit ratio and see whether repeated reads
-are being served from Redis or falling through to Postgres. Later, observability uses the
+are being served from Redis or falling through to the database. Later, observability uses the
 same idea in the observability stack.
 
 When reading this module, keep these layers separate:
@@ -190,12 +190,12 @@ When reading this module, keep these layers separate:
 ```text
 application code -> decides when to check, set, or delete cache entries
 Redis            -> stores temporary key-value entries with TTLs
-Postgres         -> stores durable link mappings
+database         -> stores durable link mappings
 metrics          -> show hit and miss behavior
 ```
 
 If the behavior is confusing, first ask which layer should own the answer. If
-the answer must be durable, it belongs in Postgres. If the answer is a repeated
+the answer must be durable, it belongs in the database. If the answer is a repeated
 read that can be rebuilt, it may belong in Redis.
 
 ## Run
@@ -291,7 +291,7 @@ https://example.com/cached
 ```
 
 means the cache currently has the URL for that `link:<code>` key. The app can
-redirect without reading Postgres.
+redirect without reading the database.
 
 A TTL output such as this:
 
@@ -333,7 +333,7 @@ being offloaded from the database.
 1. **A warmed key can hit immediately** - `POST /shorten` writes the durable row
    and also stores the cache entry, so the first redirect can avoid the database.
 2. **A cold key misses once** - deleting the Redis key forces the next redirect
-   to read Postgres and repopulate Redis.
+  to read the database and repopulate Redis.
 3. **Repeated reads become hits** - hammering the same short code increases the
    hit counters because the app keeps finding `link:<code>` in Redis.
 4. **TTL counts down** - `TTL link:<code>` shows the cached copy is temporary.
@@ -369,7 +369,7 @@ being offloaded from the database.
   can receive a sudden burst of reads. Use jitter, request coalescing, or stale
   serving when that risk matters.
 - **Fail-open is safer for correctness but not free.** If Redis is down, this
-  lab falls back to Postgres. That preserves correctness, but latency and
+  lab falls back to the database. That preserves correctness, but latency and
   database load can rise quickly.
 
 ## Next steps

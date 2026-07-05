@@ -34,7 +34,7 @@ follows from the requirements (the adjectives extracted in
 [design method](../design-method/README.md) step 1).
 
 The rule: **name the category from the problem, then pick the product from the
-constraint** — never the reverse.
+constraint** - never the reverse.
 
 For data-layer decisions, connect this catalog to the decision tree in
 [database scaling](../database-scaling/README.md). Measured read pressure points
@@ -60,8 +60,8 @@ column is the deciding constraint, not a feature list.
 
 A few terms in that table: **ACID** is the relational promise that a transaction
 either fully happens or not at all, and once committed it sticks. A relational DB
-hits a *vertical-scale ceiling* — it grows by using a larger machine, and
-sooner or later there is no bigger machine — and splitting its data across several
+hits a *vertical-scale ceiling* - it grows by using a larger machine, and
+sooner or later there is no bigger machine - and splitting its data across several
 machines is *manual*, something the system designer must design and operate (partitioning and sharding). A
 *cross-document transaction* is one all-or-nothing change touching several
 records at once, which document stores handle weakly. *Rich queries* means
@@ -72,8 +72,8 @@ Storage Service, the object store everything else imitates. A vector store is fo
 similarity over embeddings: semantic retrieval, recommendations, and retrieval
 for semantic systems.
 
-**Default:** start relational. Move off it only when a real number — dataset
-size, write rate, or how often the record shape changes — forces the decision.
+**Default:** start relational. Move off it only when a real number - dataset
+size, write rate, or how often the record shape changes - forces the decision.
 
 ### Messaging
 
@@ -84,7 +84,7 @@ size, write rate, or how often the record shape changes — forces the decision.
 | Managed (SQS) | managed operations are required | fewer routing features | [async queues](../async-queues/README.md) |
 
 The distinction turns on what happens to a message after it is read. A queue
-*deletes on consume* — once a worker takes a message, it is gone, with no way to
+*deletes on consume* - once a worker takes a message, it is gone, with no way to
 read it again. A log keeps everything, so consumers can *replay* history from the
 beginning, each tracking its own *offset* (its bookmark position in the log). The
 price is that the system must manage retention and offsets, which increases
@@ -104,17 +104,17 @@ longer operated by the application team.
 
 Redis is *single-threaded*: it runs one command at a time on a single CPU core,
 which keeps its behaviour simple and predictable but means one slow command holds
-up the rest. In return it provides real *data structures* — lists, sets, sorted
-sets, counters — not just plain values, and an optional *persistence* mode that
+up the rest. In return it provides real *data structures* - lists, sets, sorted
+sets, counters - not just plain values, and an optional *persistence* mode that
 writes to disk so data survives a restart. Memcached does not provide those
-features; it caches a key to a blob. A CDN caches *static content* —
+features; it caches a key to a blob. A CDN caches *static content* -
 files like images, CSS, and JS that rarely change, so it is safe to serve them
 from far away, near the user.
 
-**Write strategy** (independent of which product is selected): *cache-aside* — the
+**Write strategy** (independent of which product is selected): *cache-aside* - the
 app reads the cache, and on a miss loads from the DB and fills the cache itself
-(the common default); *write-through* — every write goes to cache and DB together
-(consistent, but slower writes); *write-behind* — write to cache now and flush to
+(the common default); *write-through* - every write goes to cache and DB together
+(consistent, but slower writes); *write-behind* - write to cache now and flush to
 the DB later (fast writes, but the not-yet-flushed data can be lost on a crash).
 
 ### Request entry points
@@ -127,12 +127,16 @@ the DB later (fast writes, but the not-yet-flushed data can be lost on a crash).
 
 The **L4** and **L7** labels come from where in the network stack each one
 operates. An L4 (Layer 4, transport) balancer forwards raw TCP connections
-without looking inside them — very fast, but blind to URLs and headers. An L7
+without looking inside them - very fast, but blind to URLs and headers. An L7
 (Layer 7, application) proxy reads the HTTP request itself, so it can route by
 path or header, terminate TLS, and cache. Each extra component a request passes through
 is one more *hop*, and every hop adds a little latency.
 
 ## Run
+
+```bash
+./modules/component-selection/demo.sh
+```
 
 Nothing to start. Apply the catalog to an [design method](../design-method/README.md)
 problem statement, list the categories required by the use cases, and justify each product
@@ -148,7 +152,7 @@ display name, and moderation status.
 | Requirement | Category | Product choice | Why |
 |---|---|---|---|
 | Store large image bytes durably | object store | S3-compatible object storage, MinIO in this lab | blobs do not need joins or row-level transactions |
-| Store owner, object key, status, and timestamps | relational database | Postgres in this lab | metadata needs constraints, transactions, and indexed lookup |
+| Store owner, object key, status, and timestamps | relational database | the lab's SQL database | metadata needs constraints, transactions, and indexed lookup |
 | Serve repeated public reads quickly | CDN / edge cache | edge caching module | hot images should not hit the origin every time |
 | Generate a temporary private download link | application + object store | presigned URL | app authorizes the user, storage serves the bytes |
 
@@ -158,9 +162,11 @@ event history. If none does, Kafka is not justified yet.
 
 ## How to read the commands
 
-There are no infrastructure commands in this module. Read the catalog as a set
-of decision tables. Each row names a component category, what it is good at, and
-the operational cost it introduces.
+There are no infrastructure commands in this module. Read
+`./modules/component-selection/demo.sh` as a guided workshop for producing a
+component-choice rationale. Read the catalog as a set of decision tables. Each
+row names a component category, what it is good at, and the operational cost it
+introduces.
 
 ## How to read the output
 
@@ -174,7 +180,7 @@ Kafka, or "object store" before naming S3 or MinIO.
    not to familiarity with the product.
 2. The **category** is usually obvious from the problem; the **product** comes
    down to one or two axes (replay? joins? blob size?).
-3. When two options look equally fine, the tie-breaker is **operational cost** —
+3. When two options look equally fine, the tie-breaker is **operational cost** -
   pick the one the team can operate.
 
 ## What you learned
@@ -199,7 +205,7 @@ Kafka, or "object store" before naming S3 or MinIO.
   provide the evidence needed to choose a different component when justified.
 - Picking a powerful component (Kafka, Cassandra) "to be safe" is a real cost:
   ops burden, more failure modes, harder hiring. Match the tool to the load.
-- Managed services trade money and lock-in for fewer operations — often the right call
+- Managed services trade money and lock-in for fewer operations - often the right call
   early, worth revisiting at scale.
 
 ## Next steps
@@ -210,12 +216,12 @@ Kafka, or "object store" before naming S3 or MinIO.
 
 ## Further reading
 
-- Martin Kleppmann, *Designing Data-Intensive Applications* — Ch. 3 (storage
+- Martin Kleppmann, *Designing Data-Intensive Applications* - Ch. 3 (storage
   engines) & Part II (distributed data). https://dataintensive.net/
-- AWS, "Databases on AWS — purpose-built" (category framing):
+- AWS, "Databases on AWS - purpose-built" (category framing):
   https://aws.amazon.com/products/databases/
 - Kafka vs RabbitMQ (official positioning): https://www.rabbitmq.com/blog/2021/07/13/rabbitmq-streams-overview
-- "System Design Primer" — Main Components overview:
+- "System Design Primer" - Main Components overview:
   https://github.com/donnemartin/system-design-primer#index-of-system-design-topics
 
 ## Cleanup

@@ -66,8 +66,8 @@ it considers writes durable.
 
 A *replication slot* acts like a bookmark. It tells the primary which WAL records
 the replica still needs, so a replica that briefly disconnects can catch up
-without missing changes. Application writes still go to the primary through
-**PgBouncer**, the connection pooler. When `DATABASE_REPLICA_URL` is set, the app
+without missing changes. Application writes still go to the primary through the
+connection pooler. When `DATABASE_REPLICA_URL` is set, the app
 can send reads to the replica instead. Until the standby is promoted, it remains
 read-only in Postgres recovery mode.
 

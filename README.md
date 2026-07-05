@@ -59,30 +59,30 @@ AUTO=1 ./modules/caching/demo.sh
 | 1 | Foundations | [Introduction to systems design](modules/introduction/README.md) |
 | 2 | Foundations | [The design method](modules/design-method/README.md) |
 | 3 | Foundations | [Estimation](modules/estimation/README.md) |
-| 4 | Foundations | [Choosing the right building block](modules/component-selection/README.md) |
-| 5 | Foundations | [Consistency models](modules/consistency-models/README.md) |
-| 6 | Foundations | [Availability and reliability math](modules/availability/README.md) |
-| 7 | Foundations | [When not to scale](modules/when-not-to-scale/README.md) |
-| 8 | Interfaces and edge | [API design](modules/api-design/README.md) |
-| 9 | Interfaces and edge | [DNS and name resolution](modules/dns/README.md) |
-| 10 | Interfaces and edge | [API gateway](modules/api-gateway/README.md) |
-| 11 | Interfaces and edge | [Load balancing](modules/load-balancing/README.md) |
-| 12 | Interfaces and edge | [Scaling: vertical vs horizontal](modules/scaling/README.md) |
-| 13 | Interfaces and edge | [Service discovery](modules/service-discovery/README.md) |
-| 14 | Protection | [Rate limiting and backpressure](modules/rate-limiting/README.md) |
-| 15 | Protection | [Circuit breakers, timeouts, and retries](modules/circuit-breakers/README.md) |
-| 16 | Data layer | [Databases](modules/databases/README.md) |
-| 17 | Data layer | [Database scaling](modules/database-scaling/README.md) |
-| 18 | Data layer | [Replication and failover](modules/replication-failover/README.md) |
-| 19 | Data layer | [Leader election and replica sets](modules/leader-election-replica-sets/README.md) |
-| 20 | Data layer | [Partitioning and sharding](modules/partitioning-sharding/README.md) |
-| 21 | Performance and delivery | [Caching](modules/caching/README.md) |
-| 22 | Performance and delivery | [Object storage](modules/object-storage/README.md) |
+| 4 | Foundations | [When not to scale](modules/when-not-to-scale/README.md) |
+| 5 | Foundations | [Choosing the right building block](modules/component-selection/README.md) |
+| 6 | Foundations | [Consistency models](modules/consistency-models/README.md) |
+| 7 | Foundations | [Availability and reliability math](modules/availability/README.md) |
+| 8 | Core request path | [DNS and name resolution](modules/dns/README.md) |
+| 9 | Core request path | [Load balancing](modules/load-balancing/README.md) |
+| 10 | Core request path | [API gateway](modules/api-gateway/README.md) |
+| 11 | Core request path | [Scaling: vertical vs horizontal](modules/scaling/README.md) |
+| 12 | Core request path | [Service discovery](modules/service-discovery/README.md) |
+| 13 | Data layer | [Databases](modules/databases/README.md) |
+| 14 | Data layer | [Database scaling](modules/database-scaling/README.md) |
+| 15 | Data layer | [Replication and failover](modules/replication-failover/README.md) |
+| 16 | Data layer | [Leader election and replica sets](modules/leader-election-replica-sets/README.md) |
+| 17 | Data layer | [Partitioning and sharding](modules/partitioning-sharding/README.md) |
+| 18 | Async and workflows | [Async queues](modules/async-queues/README.md) |
+| 19 | Async and workflows | [Event streaming and replayable logs](modules/event-streaming/README.md) |
+| 20 | Async and workflows | [Message delivery semantics, outbox, and idempotency](modules/message-delivery-semantics/README.md) |
+| 21 | Async and workflows | [Distributed transactions and sagas](modules/sagas/README.md) |
+| 22 | Performance and delivery | [Caching](modules/caching/README.md) |
 | 23 | Performance and delivery | [Edge caching and CDN model](modules/edge-caching/README.md) |
-| 24 | Async and workflows | [Async queues](modules/async-queues/README.md) |
-| 25 | Async and workflows | [Event streaming and replayable logs](modules/event-streaming/README.md) |
-| 26 | Async and workflows | [Message delivery semantics, outbox, and idempotency](modules/message-delivery-semantics/README.md) |
-| 27 | Async and workflows | [Distributed transactions and sagas](modules/sagas/README.md) |
+| 24 | Performance and delivery | [Object storage](modules/object-storage/README.md) |
+| 25 | Interfaces and protection | [API design](modules/api-design/README.md) |
+| 26 | Interfaces and protection | [Rate limiting and backpressure](modules/rate-limiting/README.md) |
+| 27 | Interfaces and protection | [Circuit breakers, timeouts, and retries](modules/circuit-breakers/README.md) |
 | 28 | Operations | [Observability](modules/observability/README.md) |
 | 29 | Operations | [Multi-region disaster recovery and backups](modules/multi-region-dr/README.md) |
 | 30 | Specialized retrieval | [Vector stores and similarity retrieval](modules/vector-store/README.md) |
@@ -162,8 +162,13 @@ client -> edge gateway -> application service -> data access layer -> durable st
 The concrete base lab implements that path as:
 
 ```text
-curl/browser -> Nginx gateway -> URL-shortener app -> PgBouncer -> Postgres primary
+curl/browser -> Nginx gateway -> URL-shortener app -> database access layer -> relational database
 ```
+
+The concrete lab uses PgBouncer for connection pooling and Postgres for the
+relational database. Most lessons describe the pattern first and name the exact
+service only when a command, configuration file, or database-specific lesson
+requires it.
 
 The guide does not treat Postgres as the default answer for every system. It is the durable relational store used by this local lab because it gives a clear, inspectable source of truth. Other modules add Redis, RabbitMQ, Kafka, MongoDB, MinIO, Qdrant, Consul, HAProxy, and the observability stack when those components are the right tool for the lesson.
 
