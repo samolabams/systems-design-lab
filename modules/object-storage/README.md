@@ -1,4 +1,4 @@
-# Object storage
+# Object Storage
 
 **Track:** Components
 **Study role:** Specialized - include when designs require large blobs, uploads, downloads, or media delivery.
@@ -147,7 +147,6 @@ users, it belongs in the CDN or edge layer from edge caching.
 Run these commands from the repository root:
 
 ```bash
-pwd
 ```
 
 The output should end with:

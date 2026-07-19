@@ -1,4 +1,4 @@
-# Partitioning & sharding
+# Partitioning & Sharding
 
 **Track:** Components
 **Prerequisites:** [Databases](../databases/README.md), [Database scaling](../database-scaling/README.md)
@@ -31,6 +31,12 @@ almost every key on that change. For a cache, this causes a mass cache-miss
 event; for a database, it requires copying most of the data while the system is
 live. The goal is a scheme where adding or removing a node moves only its fair
 share, approximately `1/N` of the keys.
+
+This is not only a storage problem. The shard key becomes part of the product's
+query model. If users frequently ask for all data for one customer, customer id
+may be a good key. If they frequently ask for global leaderboards, customer id
+may scatter the query across every shard. A good shard key spreads writes while
+keeping the common reads as local as possible.
 
 ## Concept
 
@@ -76,18 +82,21 @@ require reading or modifying the implementation. `demo.sh` executes it in a
 temporary hardened Node container; the important output is the two
 key-movement numbers, not the source code.
 
+Read the lab as a topology-change experiment. The keys are the same before and
+after. The only thing that changes is the number of nodes. That isolates the
+question this module cares about: how much data must move when the cluster grows
+or shrinks?
+
 > The **pseudocode above is the reference algorithm**. `shard.js` is one
 > illustrative implementation used to execute the comparison.
 
 ## Run
 
 ```bash
-pwd
 make partitioning-sharding
 ./modules/partitioning-sharding/demo.sh
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -101,6 +110,11 @@ Distribution counts show balance before a topology change. Key-movement counts
 show rebalancing cost after adding a node. If modulo moves most keys and the ring
 moves about one node's share, consistent hashing has reduced operational churn.
 
+There are two separate signals. Balance tells whether load is spread *now*.
+Movement tells how disruptive the next change will be. A scheme can look balanced
+at steady state and still be expensive to operate if every resize moves almost
+all keys.
+
 ## What to observe
 
 1. **Both spread evenly at 4 nodes** — the distribution counts are all near
@@ -110,6 +124,12 @@ moves about one node's share, consistent hashing has reduced operational churn.
 3. **The ring moves ~1/N** — adding the 5th node moves close to the ideal
    `10000 / 5 = 2000` keys (~20%), i.e. roughly one node's worth.
 4. The gap between those two numbers is the whole point of consistent hashing.
+
+For each placement scheme, write one sentence in this form:
+
+```text
+This scheme is easier/harder to operate because adding one node moved _____ keys.
+```
 
 ## What you learned
 

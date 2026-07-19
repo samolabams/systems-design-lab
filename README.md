@@ -2,6 +2,8 @@
 
 A systems-design guide with practical examples for learning how real-world system components fit together. The guide repo combines short lessons with runnable examples and guided demos to demonstrate how systems work in the real world.
 
+Course site: https://samolabams.github.io/systems-design-lab/
+
 ## Quick navigation
 
 - [Quick start](#quick-start)

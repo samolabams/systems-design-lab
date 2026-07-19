@@ -1,4 +1,4 @@
-# CAP / PACELC & consistency models
+# CAP / PACELC & Consistency Models
 
 **Track:** Foundations
 **Prerequisites:** [Replication and failover](../replication-failover/README.md), [Leader election and replica sets](../leader-election-replica-sets/README.md)
@@ -23,6 +23,11 @@ production incidents that look like bugs ("the write succeeded, but the data is 
 really a *consistency model* doing exactly what it promised. Naming the models
 precisely allows the model to be chosen deliberately instead of discovered during an
 outage. This module ties each model to the exact lab step that proves it.
+
+The practical question is always: after a write, what is a read allowed to see?
+Different answers are correct for different product features. A password change,
+bank transfer, feed counter, analytics chart, and search index do not need the
+same freshness contract.
 
 ## Concept
 
@@ -62,7 +67,6 @@ eventual consistency; the rejected write in leader election *is* a CP partition 
 ## Run
 
 ```bash
-pwd
 ./modules/consistency-models/demo.sh
 make replication-failover   # eventual + read-your-writes hazard (live)
 ./modules/replication-failover/demo.sh
@@ -70,7 +74,6 @@ make leader-election-replica-sets   # CP under partition (automatic election)
 ./modules/leader-election-replica-sets/demo.sh
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -88,6 +91,11 @@ path. A temporary miss on the replica demonstrates eventual consistency and a
 read-your-writes violation. An election or rejected write during partition shows
 a CP choice: preserve a single history even if some clients cannot write.
 
+Read each output as a contract test. The system is not failing merely because a
+replica is stale; it is demonstrating the behavior its replication mode allows.
+The design question is whether that behavior is acceptable for the feature using
+that read path.
+
 ## What to observe
 
 1. A read from the **primary** always reflects the latest write - *strong*.
@@ -98,6 +106,12 @@ a CP choice: preserve a single history even if some clients cannot write.
    read-your-writes hazard, in action.
 3. Pinning a client to one replica removes the "time going backwards" flicker -
    *monotonic reads* - at the cost of balance (load balancing `ip_hash`).
+
+For each observed read, write one sentence in this form:
+
+```text
+This read demonstrates _____ consistency because it returned _____ after _____.
+```
 
 ## What you learned
 

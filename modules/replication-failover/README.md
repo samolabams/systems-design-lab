@@ -1,4 +1,4 @@
-# Replication & failover
+# Replication & Failover
 
 **Track:** Components
 **Prerequisites:** [Databases](../databases/README.md), [Database scaling](../database-scaling/README.md)
@@ -38,6 +38,11 @@ introduces **replication lag**: a write can commit on the primary before the
 replica has replayed it. [Consistency models](../consistency-models/README.md)
 names the user-visible trade-off.
 
+The key habit is to separate three questions that often get blurred together:
+where do writes go, where may reads go, and which node can become the next
+writer? Replication improves the second and third questions, but it usually does
+not change the first: one primary still serializes writes.
+
 ## Concept
 
 Replication means keeping a copy of data on another node. A replicated data tier
@@ -74,14 +79,12 @@ read-only in Postgres recovery mode.
 ## Run
 
 ```bash
-pwd
 make replication-failover
 # point the app's reads at the replica:
 DATABASE_REPLICA_URL=postgres://app:app@postgres-replica:5432/app make base
 ./modules/replication-failover/demo.sh
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -100,6 +103,11 @@ hit a replica that has not caught up yet. If `EXPLAIN` changes from sequential
 scan to index scan, the database found a cheaper access path; that observation is
 included to remind you that indexing often comes before distributed architecture.
 
+Read the output as three different proofs. Row visibility proves copying. Lag
+proves the copy is not instantaneous. Promotion proves a role change. Keeping
+those separate prevents a common mistake: assuming a replica is simultaneously a
+fresh read target, a write scaler, a failover target, and a backup.
+
 ## What to observe
 
 1. **Replication works** — INSERT on the primary, then SELECT on the replica
@@ -114,6 +122,12 @@ included to remind you that indexing often comes before distributed architecture
    single highest-leverage DB fix.
 5. **Failover drill** — kill the primary, `pg_promote()` the replica, repoint the
    app.
+
+For each database step, write one sentence in this form:
+
+```text
+This step proves _____ because the primary/replica state is _____.
+```
 
 ## What you learned
 

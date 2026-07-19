@@ -1,4 +1,4 @@
-# modules/ - the guide
+# Modules - The Guide
 
 Each folder is one self-contained lesson. Runnable lesson folder names are
 semantic slugs that match Make targets, so you can run the same name you see in

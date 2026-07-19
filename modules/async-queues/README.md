@@ -1,4 +1,4 @@
-# Asynchronous processing and queues
+# Asynchronous Processing And Queues
 
 **Track:** Components
 **Prerequisites:** none
@@ -148,7 +148,6 @@ in the queue, unacknowledged by a worker, completed, or redelivered.
 Run these commands from the repository root:
 
 ```bash
-pwd
 ```
 
 The output should end with:

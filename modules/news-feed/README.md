@@ -1,4 +1,4 @@
-# Design a news feed
+# Design A News Feed
 
 **Track:** Capstones
 
@@ -14,7 +14,9 @@ the vocabulary this capstone expects.
 
 After this capstone, you should be able to design a news feed that
 balances fan-out-on-write, fan-out-on-read, ranking, hot users, cache strategy,
-storage layout, and eventual consistency.
+storage layout, and eventual consistency. You should be able to explain which
+part of the feed is source-of-truth data, which part is derived serving state,
+and which path pays the cost of building each user's feed.
 
 ## What you will build or run
 
@@ -30,6 +32,11 @@ read/write trade-offs at scale. A naive query becomes expensive under fan-out,
 and the appropriate design depends on the follower graph. This capstone requires
 a decision between **fan-out-on-write** and **fan-out-on-read** and introduces
 the celebrity hot-key problem.
+
+The product appears simple because the user sees one list. The system is not
+simple because that list is a materialized view over a changing social graph.
+Every design is choosing when to assemble that view: at post time, at read time,
+or partly in advance and partly on demand.
 
 ## Concept
 
@@ -101,12 +108,23 @@ cache, ranking, and read serving. It should explicitly handle celebrity users an
 state which feed entries can be stale. If all users follow the same path, the
 design probably misses the skew problem.
 
+Read the artifact as evidence about cost placement. A push design should show
+large write amplification but cheap reads. A pull design should show cheap writes
+but repeated read-time work. A hybrid design should say exactly which accounts
+switch paths and how the read service merges pushed and pulled entries.
+
 ## What to observe
 
 1. **Fan-out moves cost between writes and reads** - the right answer depends on workload shape.
 2. **Celebrity users break uniform assumptions** - hot accounts usually need a hybrid path.
 3. **Feed storage is derived state** - it can be rebuilt, but rebuilding has cost and freshness trade-offs.
 4. **Ranking changes the data path** - a chronological feed and ranked feed need different computation.
+
+For each major choice, write one sentence in this form:
+
+```text
+This feed design pays the cost at _____ because the workload has _____.
+```
 
 ## What you learned
 

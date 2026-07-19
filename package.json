@@ -1,0 +1,20 @@
+{
+  "name": "systems-design-lab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Course docs for Systems Design Lab powered by VitePress.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "vitepress build docs",
+    "preview": "vitepress preview docs",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2",
+    "vitepress": "^1.6.4"
+  }
+}

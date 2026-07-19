@@ -1,4 +1,4 @@
-# Introduction to systems design
+# Introduction To Systems Design
 
 **Track:** Foundations
 **Prerequisites:** none
@@ -89,14 +89,12 @@ replica count.
 ## Run
 
 ```bash
-pwd
 make base
 ./modules/introduction/demo.sh
 make scale N=1 && make load     # baseline: fast for one user / light load
 make scale N=3 && make load     # same code, 3x compute - observe p95 under load
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -118,6 +116,12 @@ or `302` means the request succeeded. **p95 latency** means the 95th percentile:
 95% of requests finished at or below that time, and the slowest 5% took longer.
 Higher p95 under the same load means the system is slower for the tail of users.
 Lower p95 after adding replicas means horizontal scaling helped the app tier.
+
+For each run, write one sentence in this form:
+
+```text
+This result shows _____ because status/QPS/p95 changed from _____ to _____.
+```
 
 ## What to observe
 

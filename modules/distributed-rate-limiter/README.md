@@ -1,4 +1,4 @@
-# Design a distributed rate limiter
+# Design A Distributed Rate Limiter
 
 **Track:** Capstones
 
@@ -14,7 +14,9 @@ the vocabulary this capstone expects.
 
 After this capstone, you should be able to design a distributed
 rate limiter that enforces global quotas across replicas while balancing
-accuracy, latency, storage, failure behavior, and abuse resistance.
+accuracy, latency, storage, failure behavior, and abuse resistance. You should
+be able to explain why local counters are insufficient and what failure policy
+the product wants when the shared limiter is unavailable.
 
 ## What you will build or run
 
@@ -30,6 +32,12 @@ Real systems run many gateways or app replicas, so a limit of "100 req/min per
 user" must be enforced globally across all of them. Distributed limiters need
 shared counters or coordinated state; otherwise each node can admit up to its
 local quota, multiplying the intended global limit.
+
+The core question is not just which algorithm to use. It is where authority
+lives. If every gateway decides alone, the system is fast but inaccurate. If one
+shared store decides every request, the system is accurate but adds latency and
+a new dependency. Most real designs deliberately choose a point between those
+two extremes.
 
 ## Concept
 
@@ -106,12 +114,24 @@ store, the headers returned to clients, and the fail-open/fail-closed policy. It
 should also explain hot-key behavior and what happens if Redis or the limiter
 service becomes slow.
 
+Read the artifact as an admission decision. For one incoming request, identify
+the key, the window or bucket state, the atomic operation, the response headers,
+and the fallback path when shared state cannot answer. If two gateways can admit
+more than the stated global limit without the design noticing, the design is not
+distributed enough.
+
 ## What to observe
 
 1. **The counter must be shared** - per-node counters do not enforce a global quota.
 2. **Algorithm choice shapes user experience** - fixed windows, sliding windows, and token buckets fail differently.
 3. **Hot keys are likely** - a single abusive user or tenant can concentrate load on one shard.
 4. **Failure policy is product policy** - fail-open and fail-closed protect different priorities.
+
+For each enforcement choice, write one sentence in this form:
+
+```text
+This limiter is more accurate/available because it stores the decision state in _____.
+```
 
 ## What you learned
 

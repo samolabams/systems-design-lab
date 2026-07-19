@@ -1,4 +1,4 @@
-# When NOT to scale
+# When NOT To Scale
 
 **Track:** Foundations
 **Prerequisites:** none
@@ -20,8 +20,8 @@ justify it.
 ## Why this matters
 
 The rest of the guide covers scaling machinery - replicas, caches, shards,
-queues. This module is the deliberate counterweight: **most systems add that
-machinery far too early.** Premature sharding, caching everything, and
+queues. This module provides the necessary restraint: most systems add that
+machinery far too early. Premature sharding, caching everything, and
 queue-everything are anti-patterns that buy complexity, new failure modes, and
 operational cost without a measured need. A well-tuned single relational database
 plus one read replica can serve substantial load (estimation). Require evidence before
@@ -74,14 +74,12 @@ decision later.
 ## Run
 
 ```bash
-pwd
 make base
 ./modules/when-not-to-scale/demo.sh
 make scale N=2
 make load            # observe p95 with NO cache/shard/queue
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -98,6 +96,12 @@ it shows whether the slower users are starting to feel pressure. If latency
 rises, identify the saturated component before choosing a mechanism. A slow
 query calls for indexing before sharding; a hot repeated read may justify
 caching; slow background work may justify a queue.
+
+For each proposed scaling change, write one sentence in this form:
+
+```text
+This change is justified because the measured pressure is _____.
+```
 
 ## What to observe
 

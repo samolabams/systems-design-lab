@@ -1,4 +1,4 @@
-# Scaling: vertical vs horizontal
+# Scaling: Vertical Vs Horizontal
 
 **Track:** Components
 **Prerequisites:** none
@@ -162,7 +162,6 @@ The important files and commands are:
 Run these commands from the repository root:
 
 ```bash
-pwd
 ```
 
 The output should end with:

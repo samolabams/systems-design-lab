@@ -1,4 +1,4 @@
-# Component selection (choosing the right building block)
+# Component Selection (Choosing The Right Building Block)
 
 **Track:** Foundations
 **Prerequisites:** [The design method](../design-method/README.md)
@@ -173,6 +173,12 @@ introduces.
 The output is a component-selection rationale. A strong answer names the category
 first, then the product. For example, choose "replayable event log" before naming
 Kafka, or "object store" before naming S3 or MinIO.
+
+For each component choice, write one sentence in this form:
+
+```text
+This component is justified because the requirement is _____ and the pressure is _____.
+```
 
 ## What to observe
 

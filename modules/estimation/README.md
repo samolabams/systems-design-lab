@@ -1,4 +1,4 @@
-# Back-of-the-envelope estimation
+# Back-Of-The-Envelope Estimation
 
 **Track:** Foundations
 **Prerequisites:** none
@@ -8,6 +8,8 @@
 After this module, you should be able to turn rough product
 requirements into QPS, storage, bandwidth, and latency estimates, then use those
 numbers to decide whether a cache, queue, replica, or shard is actually needed.
+You should also be able to state which assumption would change the design if it
+turned out to be wrong.
 
 ## What you will build or run
 
@@ -24,6 +26,11 @@ well-tuned database on commodity hardware benchmarked in 2026 comfortably
 handles the load, saving you from premature complexity (when not to scale).
 Conversely, it can reveal a real ceiling early, before it becomes a production
 incident. The skill is producing a defensible number fast.
+
+The output of estimation is not a precise forecast. It is a decision filter. If
+the estimate says a design is 100x below a known limit, the simple design is
+probably fine. If it says the design is within 2x of a limit, you need a sharper
+measurement, a safer architecture, or both.
 
 ## Concept
 
@@ -70,7 +77,6 @@ model is calibrated against *this* machine, not folklore:
 ## Run
 
 ```bash
-pwd
 make base
 ./modules/estimation/demo.sh
 ./modules/estimation/measure.sh   # cache-less DB read, cross-container RTT, etc.
@@ -78,7 +84,6 @@ make base
 
 Then compare the numbers in [estimate.md](estimate.md) against the measured values.
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -94,6 +99,12 @@ milliseconds and a result of hundreds of milliseconds imply very different
 design choices. Compare measured DB and network latency with the budgets in
 [estimate.md](estimate.md), then decide whether the next component is justified.
 
+Read each estimate as a chain: assumption -> formula -> design signal. If the
+assumption is uncertain, keep it visible instead of hiding it in a final number.
+For example, changing average object size from 500 bytes to 5 KB changes storage
+growth by 10x; changing write QPS from 100 to 10,000 changes whether one primary
+is still comfortable.
+
 ## What to observe
 
 1. The measured single-DB read latency (typically a few milliseconds here) is
@@ -105,6 +116,12 @@ design choices. Compare measured DB and network latency with the budgets in
 3. The estimated QPS ceiling for one relational database (tens of thousands of writes/sec)
    is high enough that sharding - splitting data across many databases (partitioning and sharding) -
    only pays off well past the scale of most applications.
+
+For each estimate, write one sentence in this form:
+
+```text
+This number suggests _____ because it is far below/near/above _____.
+```
 
 ## What you learned
 

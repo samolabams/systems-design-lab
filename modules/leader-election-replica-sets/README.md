@@ -122,7 +122,6 @@ MongoDB names the roles `PRIMARY` and `SECONDARY`; other systems may say
 ## Run
 
 ```bash
-pwd
 make leader-election-replica-sets
 ./modules/leader-election-replica-sets/demo.sh
 ```
@@ -133,7 +132,6 @@ Run non-interactively with:
 AUTO=1 ./modules/leader-election-replica-sets/demo.sh
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -165,6 +163,12 @@ That gap is the election timeout and vote process made visible.
 The document written before failover should still be readable after election.
 That is the point of majority write concern: a write acknowledged by a majority
 survives the loss of one node in a three-node group.
+
+For each cluster state, write one sentence in this form:
+
+```text
+This election behavior proves _____ because the replica set reports _____.
+```
 
 ## What to observe
 

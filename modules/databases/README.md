@@ -157,6 +157,12 @@ Table descriptions show schema: column names, types, indexes, and constraints.
 be read later. `ROLLBACK` followed by a missing row proves a transaction can undo
 uncommitted work.
 
+For each database behavior, write one sentence in this form:
+
+```text
+This datastore behavior proves _____ because the operation returned _____.
+```
+
 ## What to observe
 
 1. **Schema** - the `links` table has explicit columns and a primary key.

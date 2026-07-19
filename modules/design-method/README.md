@@ -1,4 +1,4 @@
-# The design method
+# The Design Method
 
 **Track:** Foundations
 **Prerequisites:** none
@@ -20,10 +20,11 @@ should be a justified design artifact, not a list of favorite technologies.
 ## Why this matters
 
 A systems-design discussion - in an interview or a real review - goes badly when
-it is improvised: a database choice is made before the QPS is known, or a
-queue nobody needed. A repeatable method keeps the conversation *driven*: clarify
-first, estimate, then justify each component against the numbers. This is the
-rubric used to self-assess every capstone (TinyURL capstone–distributed rate limiter capstone). Assessment rubric: [method.md](method.md).
+it is improvised: a database choice is made before the QPS is known, or a queue
+is added before the workload needs one. A repeatable method keeps the
+conversation *driven*: clarify first, estimate, then justify each component
+against the numbers. The self-assessment rubric is in [method.md](method.md),
+and the capstones reuse it.
 
 ## Concept
 
@@ -42,7 +43,7 @@ explicit steps:
    - **Adjectives -> constraints (and the components they force).** Each adjective
      buys a component: *instant* -> cache / precompute (compute the answer ahead
      of time) / websockets; *reliable* -> retries, idempotency (safe to repeat),
-     DLQ (dead-letter queue - a holding area for messages that keep failing) ·
+    DLQ (dead-letter queue - a holding area for messages that keep failing);
     *highly available* -> replication, stateless services (keep no per-client
     data, so any copy can serve any request), health checks; *scalable* ->
     partitioning, read replicas, queues. The goal is not to include technology
@@ -62,7 +63,7 @@ explicit steps:
 ## How it works
 
 Each step maps onto a part of this lab, so the method is not abstract: step 2 is
-estimation, step 4 pulls from the component catalog, step 5 is the when not to scale discipline, step 6 is
+estimation, step 4 uses the component catalog, step 5 is the when not to scale discipline, step 6 is
 trade-offs/consistency models vocabulary. Running the components first means that when you *design*, you
 are recalling mechanisms that have already been observed in the lab.
 
@@ -128,7 +129,7 @@ Now apply the same shape to a capstone:
 
 ```bash
 ./modules/design-method/demo.sh
-# Pick a capstone exercise (TinyURL capstone–distributed rate limiter capstone) and work the six steps on paper,
+# Pick a capstone exercise, such as TinyURL or the distributed rate limiter, and work the six steps on paper,
 # then build the relevant components and grade yourself with method.md.
 ```
 
@@ -145,6 +146,12 @@ The output is a design document. It should include requirements, estimates, a
 high-level diagram, component choices, bottleneck analysis, and explicit
 trade-offs. If a component appears without a requirement or estimate that needs
 it, the design is not justified yet.
+
+For each design choice, write one sentence in this form:
+
+```text
+This choice is justified because the requirement or estimate _____ creates pressure on _____.
+```
 
 ## What to observe
 

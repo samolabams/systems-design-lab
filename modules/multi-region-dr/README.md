@@ -1,4 +1,4 @@
-# Multi-region, disaster recovery & backups
+# Multi-Region, Disaster Recovery & Backups
 
 **Track:** Foundations
 **Study role:** Advanced — study after availability, replication, and failure modes are understood.
@@ -8,7 +8,9 @@
 
 After this module, you should be able to explain RPO and RTO,
 compare active-passive and active-active recovery strategies, and distinguish
-replication from backup by performing a restore drill.
+replication from backup by performing a restore drill. You should also be able
+to point at a recovery procedure and identify exactly where data loss can occur,
+where downtime begins, and which copy is trusted during restore.
 
 ## What you will build or run
 
@@ -24,6 +26,12 @@ disaster-recovery question: **what happens when an entire region, or a mistaken
 `DELETE`, removes critical data?** Replication can improve *availability*, but it
 does **not** by itself provide *recoverability*. A tested restore procedure is
 what separates a temporary outage from permanent data loss.
+
+The important mental split is live redundancy versus historical recovery. A
+replica is useful when a machine dies. A backup is useful when the live data is
+wrong. Those failures feel similar during an incident because users cannot get
+the data they need, but the recovery path is different: fail over to a healthy
+copy for infrastructure failure; restore an older copy for logical corruption.
 
 ## Concept
 
@@ -60,12 +68,10 @@ This drill reuses the `replication-failover` profile because the backup and
 restore lesson needs the same Postgres primary/standby topology.
 
 ```bash
-pwd
 make replication-failover
 ./modules/multi-region-dr/demo.sh   # guided backup -> destroy -> restore drill
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 The demo runs the steps below and prints the measured RTO; to run them by hand:
 
@@ -86,12 +92,22 @@ The `pg_dump` command creates an out-of-band recovery copy. The `DELETE` command
 simulates logical corruption. The restore command proves recovery comes from the
 backup, not from the replica.
 
+Read the drill as a timeline. Before the backup, there is no recovery point.
+After `pg_dump`, the recovery point exists but may become stale. After `DELETE`,
+replication spreads the mistake. During restore, the system trades downtime for
+returning to a known-good state.
+
 ## How to read the output
 
 If the standby loses the rows too, replication has faithfully copied the bad
 write. If the restore brings the rows back, the backup has provided recovery.
 The reported RTO is elapsed restore time; the RPO is how much data could be lost
 since the last backup.
+
+If the demo prints row counts before and after each step, treat them as evidence
+about which copy is safe. A matching empty count on primary and standby proves
+replication worked, but also proves replication cannot undo this class of
+failure. Restored rows prove the backup was both present and usable.
 
 ## What to observe
 
@@ -101,6 +117,12 @@ since the last backup.
    not the standby.
 3. The achieved **RPO** equals how stale the last backup was; the **RTO** equals
    how long the restore took. Both are measurable, not aspirational.
+
+For each step, write one sentence in this form:
+
+```text
+This step proves _____ because the trusted recovery copy is _____.
+```
 
 ## What you learned
 

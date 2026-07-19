@@ -1,4 +1,4 @@
-# Rate limiting
+# Rate Limiting
 
 **Track:** Components
 **Prerequisites:** none
@@ -31,6 +31,12 @@ attacker — can consume all available capacity and take the service down for ev
 Rate limiting caps how fast any one caller may consume resources, returning
 **429 Too Many Requests** for traffic over the configured quota while preserving
 capacity for admitted requests. It is the cheapest form of load shedding.
+
+The important design boundary is that rate limiting rejects work *before* the
+expensive part of the system spends resources. A request that receives `429` is
+not an application bug; it is the protection policy doing its job. The lesson is
+to choose the key, window, and limit so legitimate users are slowed gently while
+abusive or accidental floods are stopped early.
 
 ## Concept
 
@@ -89,12 +95,10 @@ layers are visible:
 ## Run
 
 ```bash
-pwd
 make rate-limiting
 ./modules/rate-limiting/demo.sh
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -121,6 +125,11 @@ bucket refilled.
 Redis counts such as `req 6 -> count 6 DENY` prove the application-level quota is
 being enforced by a shared counter rather than local process memory.
 
+Read each line as an admission decision. The status code tells whether the
+request passed the gate. The counter tells why. The TTL tells when the decision
+window resets. Those three values together explain both user behavior and system
+protection.
+
 ## What to observe
 
 1. **Baseline** — with no limit, all 12 requests return `200`.
@@ -132,6 +141,12 @@ being enforced by a shared counter rather than local process memory.
 4. **Global counter** — the Redis `INCR` returns a running count; requests 1–5
    `ALLOW`, 6–7 `DENY`. `TTL` shows the window shrinking toward 0, after which the
    key expires and a fresh window begins.
+
+For each limiting layer, write one sentence in this form:
+
+```text
+This request was admitted/rejected because the key _____ had count _____ in window _____.
+```
 
 ## What you learned
 

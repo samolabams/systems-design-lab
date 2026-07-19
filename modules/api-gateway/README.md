@@ -144,7 +144,6 @@ route `/shorten` on `app:3000` while preserving useful client headers.
 Run these commands from the repository root:
 
 ```bash
-pwd
 ```
 
 The output should end with:

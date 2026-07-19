@@ -1,4 +1,4 @@
-# API design: REST vs gRPC vs GraphQL
+# API Design: REST Vs gRPC Vs GraphQL
 
 **Track:** Components
 **Prerequisites:** none
@@ -80,14 +80,12 @@ proxy), build-time coupling — are called out inline as trade-offs.
 ## Run
 
 ```bash
-pwd
 make api-design
 ./modules/api-design/demo.sh
 ```
 
 Run non-interactively with `AUTO=1 ./modules/api-design/demo.sh`.
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -113,6 +111,12 @@ avoid over-fetching.
 Round-trip counts should be read as a model of access pattern cost: one nested
 GraphQL request can replace a REST request followed by one request per child
 resource, but GraphQL shifts complexity into query planning and cost control.
+
+For each API style, write one sentence in this form:
+
+```text
+This API shape supports the client because it changes _____ into _____.
+```
 
 ## What to observe
 

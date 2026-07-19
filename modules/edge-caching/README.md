@@ -1,4 +1,4 @@
-# Edge caching and CDN model
+# Edge Caching And CDN Model
 
 **Track:** Components
 **Study role:** Specialized - use when designs need public/static content delivery, origin offload, or global latency reduction.
@@ -152,7 +152,6 @@ which cache key was used, then ask whether the cached entry is fresh or expired.
 Run these commands from the repository root:
 
 ```bash
-pwd
 ```
 
 The output should end with:

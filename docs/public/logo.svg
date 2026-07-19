@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Systems Design Lab">
+  <rect width="64" height="64" rx="12" fill="#111827"/>
+  <circle cx="18" cy="20" r="6" fill="#38bdf8"/>
+  <circle cx="46" cy="20" r="6" fill="#34d399"/>
+  <circle cx="18" cy="44" r="6" fill="#f59e0b"/>
+  <circle cx="46" cy="44" r="6" fill="#f97316"/>
+  <path d="M24 20h16M20.5 25.5l21 13M43.5 25.5l-21 13M24 44h16" stroke="#f9fafb" stroke-width="4" stroke-linecap="round"/>
+</svg>

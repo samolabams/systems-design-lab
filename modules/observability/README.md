@@ -1,4 +1,4 @@
-# Observability: metrics, logs & traces
+# Observability: Metrics, Logs & Traces
 
 **Track:** Components
 **Prerequisites:** none for metrics and logs; the cross-service trace walkthrough
@@ -103,7 +103,6 @@ a no-op — and the app is unaffected.
 ## Run
 
 ```bash
-pwd
 make observability
 # Grafana:  http://localhost:3001   (anonymous viewer; admin/admin)
 # Tempo + Loki + Prometheus are backend-only — reach them through Grafana.
@@ -112,7 +111,6 @@ make observability
 ./modules/observability/demo.sh
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 `make observability` starts the observability backends. The guided demo also
 brings up the async queue profile so `POST /api/jobs` can produce a trace that
@@ -148,6 +146,12 @@ metric spike -> exemplar trace_id -> Tempo trace -> Loki logs
 
 If a job trace includes both app and worker spans, context propagation through
 the queue is working.
+
+For each troubleshooting hop, write one sentence in this form:
+
+```text
+This signal narrows the problem because it links _____ to _____.
+```
 
 ## What to observe
 
@@ -203,7 +207,8 @@ the queue is working.
 - Tom Wilkie, "The RED Method": https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/
 - Brendan Gregg, "The USE Method": https://www.brendangregg.com/usemethod.html
 - OpenTelemetry, "What is OpenTelemetry?": https://opentelemetry.io/docs/what-is-opentelemetry/
-- Grafana, "Tempo" (traces) & "Loki" (logs): https://grafana.com/docs/tempo/latest/ · https://grafana.com/docs/loki/latest/
+- Grafana, "Tempo" (traces): https://grafana.com/docs/tempo/latest/
+- Grafana, "Loki" (logs): https://grafana.com/docs/loki/latest/
 - Google SRE Book — "Monitoring Distributed Systems" (the four golden signals):
   https://sre.google/sre-book/monitoring-distributed-systems/
 

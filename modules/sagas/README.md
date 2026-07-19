@@ -1,4 +1,4 @@
-# Distributed transactions & sagas
+# Distributed Transactions & Sagas
 
 **Track:** Components
 **Study role:** Advanced — microservices transaction design after queues, logs, and idempotency are understood.
@@ -83,14 +83,12 @@ the saga's *control flow* (advance vs. compensate) is the only moving part.
 ## Run
 
 ```bash
-pwd
 make sagas
 ./modules/sagas/demo.sh
 ```
 
 Run non-interactively with `AUTO=1 ./modules/sagas/demo.sh`.
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -119,6 +117,12 @@ not by rolling back one global transaction.
 
 When the reserve step is retried and stock does not change, the idempotency key
 has prevented duplicate application of a redelivered command.
+
+For each saga step, write one sentence in this form:
+
+```text
+This workflow remains consistent because the step reached _____ and the recovery action is _____.
+```
 
 ## What to observe
 

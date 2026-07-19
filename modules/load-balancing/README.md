@@ -1,4 +1,4 @@
-# Load balancing
+# Load Balancing
 
 **Track:** Components
 **Prerequisites:** none
@@ -206,7 +206,6 @@ the cleaner contrast: it uses `server-template` to track backend membership and
 Run these commands from the repository root:
 
 ```bash
-pwd
 ```
 
 The output should end with:

@@ -1,4 +1,4 @@
-# Caching strategies & invalidation
+# Caching Strategies & Invalidation
 
 **Track:** Components
 **Prerequisites:** none
@@ -203,7 +203,6 @@ read that can be rebuilt, it may belong in Redis.
 Run these commands from the repository root:
 
 ```bash
-pwd
 ```
 
 The output should end with:
@@ -327,6 +326,12 @@ keyspace_misses:1
 mean Redis itself has answered many successful key lookups and only a small
 number of missing ones. A rising hit count is evidence that repeated reads are
 being offloaded from the database.
+
+For each cache observation, write one sentence in this form:
+
+```text
+This cache behavior proves _____ because the key/result/TTL changed from _____ to _____.
+```
 
 ## What to observe
 

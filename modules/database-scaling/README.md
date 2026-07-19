@@ -1,4 +1,4 @@
-# Database scaling
+# Database Scaling
 
 **Track:** Components
 **Prerequisites:** [Databases](../databases/README.md)
@@ -161,7 +161,6 @@ That is why sharding should be treated as a deliberate response to a real ceilin
 This is a reasoning module over the base stack. Start the base system, then use the guided demo:
 
 ```bash
-pwd
 make base
 ./modules/database-scaling/demo.sh
 ```
@@ -172,7 +171,6 @@ To run without pauses:
 AUTO=1 ./modules/database-scaling/demo.sh
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -182,10 +180,16 @@ module such as replication and failover, partitioning and sharding, caching, or 
 
 ## How to read the output
 
-Output showing the connection pooler in the path points to connection management. Output
-showing private Postgres networking points to isolation. Output showing one
+Output showing the connection pooler in the path points to connection management.
+Output showing private Postgres networking points to isolation. Output showing one
 shared database behind many app replicas explains why app scaling and database
 scaling are different problems.
+
+For each pressure point, write one sentence in this form:
+
+```text
+This database scaling mechanism is justified because the bottleneck is _____.
+```
 
 ## What to observe
 

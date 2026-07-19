@@ -1,4 +1,4 @@
-# Circuit breakers
+# Circuit Breakers
 
 **Track:** Components
 **Prerequisites:** none
@@ -31,6 +31,11 @@ connection while waiting for a timeout, so one unhealthy dependency can drain th
 caller pool and latency budget until the caller fails as well. That is a
 **cascading failure**. A circuit breaker detects the problem and **fails fast**,
 shielding the caller and giving the dependency room to recover.
+
+The breaker does not make the dependency healthy. It changes the caller's
+behavior while the dependency is unhealthy. That distinction matters: the goal is
+to stop spending scarce caller resources on work that is unlikely to succeed,
+then test recovery cautiously instead of stampeding back in.
 
 ## Concept
 
@@ -89,12 +94,10 @@ every state transition and each call's outcome.
 ## Run
 
 ```bash
-pwd
 make circuit-breakers
 ./modules/circuit-breakers/demo.sh
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -126,6 +129,11 @@ failures while OPEN prove the caller is no longer waiting on the dependency.
 The HALF_OPEN probe proves recovery is tested cautiously before normal traffic
 resumes.
 
+Read each output row as a state-machine transition or a decision made by the
+current state. The same dependency failure has different meaning depending on
+state: in CLOSED it increments the failure count; in HALF_OPEN it reopens the
+breaker; in OPEN it should not call the dependency at all.
+
 ## What to observe
 
 1. **CLOSED / healthy** - the first calls return `OK`.
@@ -137,6 +145,12 @@ resumes.
 4. **Probe & recover** - after the cooldown the breaker goes `OPEN -> HALF_OPEN`,
    a probe succeeds once the dependency heals, and it returns `HALF_OPEN ->
    CLOSED`.
+
+For each transition, write one sentence in this form:
+
+```text
+The breaker moved from _____ to _____ because _____.
+```
 
 ## What you learned
 

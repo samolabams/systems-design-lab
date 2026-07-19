@@ -1,4 +1,4 @@
-# Message delivery semantics, outbox & idempotency
+# Message Delivery Semantics, Outbox & Idempotency
 
 **Track:** Components
 **Study role:** Advanced — study after replication, queues, and event streaming are understood.
@@ -104,12 +104,10 @@ between delivery and processing.
 ## Run
 
 ```bash
-pwd
 make message-delivery-semantics
 ./modules/message-delivery-semantics/demo.sh
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -144,6 +142,12 @@ table absorbed a redelivered event. If the notification count stays at three
 after a second delivery, the side effect happened once per event even though the
 broker delivered the events more than once. That is effectively-once processing
 on top of at-least-once delivery.
+
+For each delivery step, write one sentence in this form:
+
+```text
+This step is safe to retry because the idempotency/dedup record _____.
+```
 
 ## What to observe
 

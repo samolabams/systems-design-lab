@@ -1,4 +1,4 @@
-# DNS & name resolution
+# DNS & Name Resolution
 
 **Track:** Components
 **Prerequisites:** none
@@ -211,7 +211,6 @@ normally, so this is only a quirk of querying from the host).
 Run these commands from the repository root:
 
 ```bash
-pwd
 ```
 
 The output should end with:

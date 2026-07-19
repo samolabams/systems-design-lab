@@ -4,6 +4,8 @@
 # Node
 node_modules/
 npm-debug.log*
+docs/.vitepress/dist/
+docs/.vitepress/cache/
 
 # TLS certs (M13) — generated, never committed
 infra/gateway/certs/

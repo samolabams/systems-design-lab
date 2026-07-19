@@ -1,4 +1,4 @@
-# Service discovery
+# Service Discovery
 
 **Track:** Components
 **Prerequisites:** none
@@ -26,6 +26,11 @@ automatic adjustment of replica count in response to load or policy. Real
 systems need a **registry**: services register themselves, report health, and the
 load balancer routes only to **healthy** entries. This is the active health
 checking and dynamic membership that load balancing's static configuration lacked.
+
+Discovery is the difference between a name that points at yesterday's topology
+and a lookup that reflects today's healthy instances. DNS can answer "what is the
+address for this name?" Service discovery adds "which instances currently exist,
+and which of them should receive traffic?"
 
 ## Concept
 
@@ -84,14 +89,12 @@ set changes only after one or more scheduled checks notice the failure.
 ## Run
 
 ```bash
-pwd
 make service-discovery
 ./modules/service-discovery/demo.sh
 ```
 
 Run non-interactively with `AUTO=1 ./modules/service-discovery/demo.sh`.
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -107,6 +110,11 @@ disappears from the passing set after it is stopped has been removed by active
 health checking. The important comparison is with load balancing: no gateway config edit is
 needed for the registry to know membership changed.
 
+Read the output as a membership set, not as a one-time address lookup. The names,
+ports, and health states are a moving list. When the list changes after a stop or
+scale event, the registry is proving it can track reality without a static config
+edit.
+
 ## What to observe
 
 1. All three replicas register and show up as **passing** in Consul with no config
@@ -115,6 +123,12 @@ needed for the registry to know membership changed.
   within a couple of check intervals — discovery no longer returns the failed instance.
 3. Contrast with load balancing: the static `upstream` resolved once at boot and could only
    detect failure passively, after serving errors.
+
+For each registry query, write one sentence in this form:
+
+```text
+This registry result is routable/not routable because the service health is _____.
+```
 
 ## What you learned
 

@@ -1,4 +1,4 @@
-# Design a chat system
+# Design A Chat System
 
 **Track:** Capstones
 
@@ -15,7 +15,9 @@ capstone expects.
 
 After this capstone, you should be able to design a chat system
 around persistent connections, message ordering, delivery guarantees, presence,
-fan-out, storage, retries, deduplication, and observability.
+fan-out, storage, retries, deduplication, and observability. You should be able
+to trace a message from sender to durable storage to every connected or offline
+recipient, including what happens when the sender retries.
 
 ## What you will build or run
 
@@ -32,6 +34,12 @@ realtime transport (**WebSockets** — a long-lived two-way connection between
 browser and server, unlike request/response HTTP), queues (async queues), and at-least-once
 delivery with dedup (message delivery semantics) at the same time — a true integration test of the
 guide.
+
+The user expectation is deceptively strict: messages should feel instant, appear
+once, remain readable later, and preserve room order. Those guarantees come from
+different parts of the system. WebSockets make delivery feel realtime; durable
+storage preserves history; sequence numbers or partitions preserve order; ids and
+acknowledgements make retries safe.
 
 ## Concept
 
@@ -102,12 +110,23 @@ for a room, and the mechanism that delivers messages to connected clients. It
 should explain what happens when a gateway dies while clients are connected and
 how clients resume from the last delivered message.
 
+Read the artifact as a failure walkthrough. Pick one message id and follow it
+through send, persist, fan-out, acknowledgement, retry, reconnect, and history
+fetch. If the same message can be displayed twice, vanish after reconnect, or
+arrive out of room order without an explanation, the design is incomplete.
+
 ## What to observe
 
 1. **Connections are stateful** - horizontal scaling needs routing or pub/sub to reach the right socket.
 2. **Ordering has a scope** - strict ordering is usually per room, not global.
 3. **Retries require idempotency** - at-least-once delivery is usable only when duplicates are harmless.
 4. **Presence can dominate traffic** - typing and online state need batching or throttling at scale.
+
+For each message-flow step, write one sentence in this form:
+
+```text
+This step preserves _____ because the system records/checks _____.
+```
 
 ## What you learned
 

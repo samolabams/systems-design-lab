@@ -17,6 +17,8 @@ document.
 After this capstone, you should be able to design a URL shortener
 from requirements through estimates, ID generation, storage, caching, analytics,
 API shape, and failure modes, using the design method rubric as the evaluation standard.
+You should be able to trace both the create path and the redirect path and name
+which operation must stay fastest under load.
 
 ## What you will build or run
 
@@ -31,6 +33,12 @@ The URL shortener has been the reference app throughout the lab. This capstone
 steps back and designs it deliberately by applying the design method end-to-end and
 using the relevant components. It is the introductory capstone because the domain
 is already familiar; the focus is the *process*, not domain novelty.
+
+The design is a useful interview problem because the surface area is tiny but
+the hidden choices are real: key generation, collision handling, cache behavior,
+abuse controls, expiry, analytics, and hot-link protection. The short URL is only
+the product shape; the engineering problem is making redirects fast and durable
+without letting optional analytics slow them down.
 
 > This is a paper exercise, not a coding task. The deliverable is a design doc.
 > The running [`apps/url-shortener/`](../../apps/url-shortener/) is here as a
@@ -109,12 +117,23 @@ database lookup by code, and analytics should be asynchronous. If the design doe
 not state collision handling, cache invalidation, and abuse controls, it is not
 complete yet.
 
+Read the artifact as two timelines. The create timeline must prove a code is
+unique before it is returned. The redirect timeline must prove the code maps to a
+valid long URL quickly, even when analytics, cache misses, or stale entries are
+present. Anything not required for the redirect should be off the critical path.
+
 ## What to observe
 
 1. **The redirect path is the hot path** - it should be short, cache-friendly, and easy to scale.
 2. **ID generation is a product and capacity decision** - short, guessable, random, and custom aliases have different costs.
 3. **Analytics should not slow redirects** - click events belong on an asynchronous path.
 4. **Every component needs a reason** - the design should tie cache, replicas, queues, and sharding to estimates or requirements.
+
+For each path, write one sentence in this form:
+
+```text
+This path stays correct/fast because _____ happens before/after _____.
+```
 
 ## What you learned
 

@@ -1,4 +1,4 @@
-# Event streaming and replayable logs
+# Event Streaming And Replayable Logs
 
 **Track:** Components
 **Prerequisites:** [Async queues](../async-queues/README.md)
@@ -144,7 +144,6 @@ committed.
 Run these commands from the repository root:
 
 ```bash
-pwd
 ```
 
 The output should end with:

@@ -65,6 +65,22 @@ These are load-bearing — please keep them consistent.
 4. Open a pull request describing **what** changed, **why**, and **how you
    verified it** (the commands you ran). Link the module or issue it relates to.
 
+## Documentation site
+
+The public course site is a VitePress app under `docs/`, following the same
+shape as the reference course site this repo is modeled after. Use these local
+commands when editing the site shell or curriculum landing pages:
+
+```bash
+npm install
+npm run docs:dev
+npm run docs:build
+npm run docs:preview
+```
+
+GitHub Pages is deployed by `.github/workflows/deploy-pages.yml`. In the GitHub
+repository settings, configure Pages to use **GitHub Actions** as the source.
+
 ## Pull request checklist
 
 - [ ] `docker compose config --quiet` passes.
@@ -74,6 +90,7 @@ These are load-bearing — please keep them consistent.
 - [ ] No app/demo-specific files added under `infra/`.
 - [ ] Docs updated (README/INSTRUCTIONS/module README) if behavior or layout
       changed.
+- [ ] `npm run docs:build` passes if the VitePress site changed.
 - [ ] No secrets or real credentials added.
 
 ## Reporting bugs & proposing modules

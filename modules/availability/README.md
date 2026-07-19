@@ -1,4 +1,4 @@
-# Availability & reliability math
+# Availability & Reliability Math
 
 **Track:** Foundations
 **Prerequisites:** none
@@ -7,7 +7,9 @@
 
 After this module, you should be able to calculate downtime from
 availability targets, distinguish SLI, SLO, and SLA, explain error budgets, and
-read reliability signals from the observability dashboard.
+read reliability signals from the observability dashboard. You should be able
+to look at an availability target and say what it costs in allowed failure time,
+what must be measured, and which alerts should page a human.
 
 ## What you will build or run
 
@@ -24,6 +26,12 @@ year - and roughly an order of magnitude more engineering cost. This module
 gives the arithmetic for setting an affordable *target* and measuring whether the
 system is meeting it, so reliability becomes a managed number rather than a
 guess.
+
+The key habit is to translate adjectives into budgets. "Reliable" becomes a
+success ratio over a window. "Too slow" becomes a latency percentile. "Urgent"
+becomes a burn rate that says the service is spending its error budget too fast.
+That translation is what lets teams distinguish a scary graph from a user-impacting
+incident.
 
 ## Concept
 
@@ -66,7 +74,7 @@ averaged over the last 30 minutes; `status=~"5.."` = a regex matching HTTP 5xx
 error codes - server failures; `status!~"5.."` = everything that is *not* a 5xx,
 i.e. the successes):
 
-```promql
+```text
 # success ratio (SLI) over 30m
 sum(rate(http_requests_total{status!~"5.."}[30m]))
   / sum(rate(http_requests_total[30m]))
@@ -79,13 +87,11 @@ sum(rate(http_requests_total{status!~"5.."}[30m]))
 ## Run
 
 ```bash
-pwd
 make availability    # Grafana: http://localhost:3001
 ./modules/availability/demo.sh
 make load               # generate traffic; observe RED + SLO/error-budget panels
 ```
 
-The output of `pwd` should end with `systems-design`.
 
 ## How to read the commands
 
@@ -101,6 +107,12 @@ In Grafana, read the success ratio as the measured SLI. Read the error budget as
 remaining tolerance for bad requests before the SLO is missed. Read burn rate as
 the speed at which that budget is being consumed.
 
+Do not read a single red point as the whole story. Ask three questions in order:
+what user-visible behavior is being measured, over what time window, and how fast
+is the budget being spent? A short spike may be acceptable if the monthly budget
+barely moves; a smaller sustained error rate may be dangerous if it burns the
+budget for hours.
+
 ## What to observe
 
 1. The **success-ratio** SLI sits near 100% under normal load (green).
@@ -108,6 +120,12 @@ the speed at which that budget is being consumed.
    ratio dips - the **error budget** gauge starts draining.
 3. A **fast-burn** condition (burn rate ≫ 1) is exactly what a good alert fires
    on - not every single error.
+
+For each panel, write one sentence in this form:
+
+```text
+This panel proves _____ because the measured _____ changed from _____ to _____.
+```
 
 ## What you learned
 

@@ -1,4 +1,4 @@
-# Vector stores and similarity retrieval
+# Vector Stores And Similarity Retrieval
 
 **Track:** Components
 **Study role:** Specialized - include when designs require semantic retrieval, recommendations, image similarity, or similar-item search.
@@ -149,7 +149,6 @@ source record changes
 Run these commands from the repository root:
 
 ```bash
-pwd
 ```
 
 The output should end with:
